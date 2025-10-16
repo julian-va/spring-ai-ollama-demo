@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: ms-suggestions
+
+
+server:
+  port: 8081
+  http2:
+    enabled: true
+
+logging:
+  level:
+    org.springframework.ai: DEBUG
+
+ollama:
+  base-url: "http://localhost:11434"
+  llama:
+    model: "llama3:latest"
+    temperature: 0.6
+    numPredict: 1024
+    keepAlive: "10m"
+    numGPU: 22
