@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: ms-suggestions
+
+
+server:
+  port: 8081
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+
+
+ollama:
+  base-url: "http://localhost:11434"
+  connect-timeout-ms: 60000
+  response-timeout-s: 300
+  llama:
+    model: "llama3:latest"
+    temperature: 0.6
+    numPredict: 1024
+    keepAlive: "10m"
+    numGPU: 22

@@ -1,10 +1,19 @@
 name: Build, Test and Release (Java 21 + Gradle)
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
-    branches: [ '**' ]           # Ejecuta en cualquier push
+    branches: [ 'main', 'develop' ]
+    paths:
+      - 'ms-suggestions/**'
+      - 'build.gradle.kts'
   pull_request:
-    branches: [ '**' ]           # Ejecuta en cualquier PR
+    branches: [ '**' ]
+    paths:
+      - 'ms-suggestions/**'
   workflow_dispatch:              # Permite ejecución manual
 
 permissions:
@@ -12,7 +21,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  # 🧪 JOB 1: Build & Test en todos los push/PR
+  # 🧪 JOB 1: Build & Test en todos los push/PR hacia ramas seleccionadas
   build:
     name: Build and Test
     runs-on: ubuntu-latest
@@ -42,6 +51,7 @@ jobs:
         with:
           name: spring-ai-ollama-demo
           path: build/libs/*.jar
+          retention-days: 3
 
   # 🚀 JOB 2: Crear release solo cuando el push es a main
   release:

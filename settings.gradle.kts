@@ -6,3 +6,5 @@
  */
 
 rootProject.name = "spring-ai-ollama-suggestions"
+
+include("ms-suggestions")
