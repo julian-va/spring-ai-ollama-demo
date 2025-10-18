@@ -71,12 +71,7 @@ class OllamaConfig(
         val httpClient: HttpClient = HttpClient.create()
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMs)
             .responseTimeout(Duration.ofSeconds(responseTimeoutSeconds))
-        /*.doOnConnected { connection ->
-            connection.addHandlerLast(ReadTimeoutHandler(responseTimeoutSeconds, TimeUnit.SECONDS))
-            connection.addHandlerLast(WriteTimeoutHandler(responseTimeoutSeconds, TimeUnit.SECONDS))
-        }*/
-
-
+        
         return WebClient.builder()
             .clientConnector(ReactorClientHttpConnector(httpClient))
     }

@@ -1,4 +1,4 @@
-package jva.cloud.infrastructure.adapters.output.ia.entity
+package jva.cloud.infrastructure.adapters.entity
 
 data class MessageSuggestionEntity(
     val systemMessage: String,

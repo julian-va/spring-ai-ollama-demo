@@ -28,15 +28,11 @@ class LamaRecommender(
 
         return flow {
             chatModel.stream(Prompt(messages)).asFlow().collect { chatResponse ->
-                val content = chatResponse.result.output.text?.let { text ->
+                chatResponse.result.output.text?.let { text ->
                     builder.append(text)
                 }
             }
             emit(builder.toString())
         }
-
-        /* return chatModel.stream(Prompt(messages)).asFlow().map { chatResponse ->
-             chatResponse.result.output.text ?: ""
-         }*/
     }
 }

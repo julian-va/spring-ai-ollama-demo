@@ -26,6 +26,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // Mockito Kotlin helpers for idiomatic Kotlin mocking
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
 }
 
 dependencyManagement {

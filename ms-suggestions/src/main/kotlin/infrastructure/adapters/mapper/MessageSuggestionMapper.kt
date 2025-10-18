@@ -1,7 +1,7 @@
-package jva.cloud.infrastructure.adapters.output.ia.mapper
+package jva.cloud.infrastructure.adapters.mapper
 
 import jva.cloud.domain.model.MessageSuggestion
-import jva.cloud.infrastructure.adapters.output.ia.entity.MessageSuggestionEntity
+import jva.cloud.infrastructure.adapters.entity.MessageSuggestionEntity
 import org.mapstruct.Mapper
 
 @Mapper(componentModel = "spring")
