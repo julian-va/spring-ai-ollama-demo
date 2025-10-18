@@ -1,0 +1,93 @@
+name: Build, Test and Release (Java 21 + Gradle)
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [ 'main', 'develop' ]
+    paths:
+      - 'ms-suggestions/**'
+      - 'build.gradle.kts'
+  pull_request:
+    branches: [ '**' ]
+    paths:
+      - 'ms-suggestions/**'
+  workflow_dispatch:              # Permite ejecución manual
+
+permissions:
+  contents: write                 # Necesario para crear releases
+  pull-requests: write
+
+jobs:
+  # 🧪 JOB 1: Build & Test en todos los push/PR hacia ramas seleccionadas
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Grant execute permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew clean build --no-daemon
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spring-ai-ollama-demo
+          path: build/libs/*.jar
+          retention-days: 3
+
+  # 🚀 JOB 2: Crear release solo cuando el push es a main
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build                  # Solo corre si el build fue exitoso
+    if: github.ref == 'refs/heads/main'  # Solo cuando se hace push/merge a main
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Grant execute permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Build for Release
+        run: ./gradlew clean build --no-daemon
+
+      - name: Generate changelog
+        run: |
+          echo "## Changes in this release" > release_notes.md
+          git log -10 --pretty=format:"- %s" >> release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ github.run_number }}"
+          name: "Release v${{ github.run_number }}"
+          body_path: release_notes.md
+          files: build/libs/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
