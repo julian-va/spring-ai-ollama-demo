@@ -2,8 +2,8 @@ package infrastructure.adapters.input.web
 
 import application.port.output.AiRecommenderPort
 import application.usecase.AiRecommenderUseCase
-import infrastructure.adapters.entity.GenerationResultEntity
-import infrastructure.adapters.entity.MessageSuggestionEntity
+import infrastructure.adapters.dto.GenerationResultDto
+import infrastructure.adapters.dto.RequestMessageSuggestionDto
 import infrastructure.adapters.mapper.GenerationResultMapper
 import infrastructure.adapters.mapper.MessageSuggestionMapper
 import jakarta.validation.Valid
@@ -38,7 +38,7 @@ class AiRecommenderController(
     /**
      * Stream model-generated text fragments as Server-Sent Events (text/event-stream).
      *
-     * @param messageSuggestionEntity incoming DTO with system and user messages.
+     * @param requestMessageSuggestionDto incoming DTO with system and user messages.
      * @return a Flow of text fragments emitted by the model.
      */
     @PostMapping(
@@ -46,14 +46,14 @@ class AiRecommenderController(
         consumes = [MediaType.APPLICATION_JSON_VALUE],
         produces = [MediaType.TEXT_EVENT_STREAM_VALUE]
     )
-    fun retrieveRecommendations(@Valid @RequestBody messageSuggestionEntity: MessageSuggestionEntity): Flow<String> {
-        return aiRecommenderUseCase.recommendStream(messageSuggestionMapper.toModel(entity = messageSuggestionEntity))
+    fun retrieveRecommendations(@Valid @RequestBody requestMessageSuggestionDto: RequestMessageSuggestionDto): Flow<String> {
+        return aiRecommenderUseCase.recommendStream(messageSuggestionMapper.toModel(entity = requestMessageSuggestionDto))
     }
 
     /**
      * Produce a full recommendation synchronously and return it as JSON.
      *
-     * @param messageSuggestionEntity incoming DTO with system and user messages.
+     * @param requestMessageSuggestionDto incoming DTO with system and user messages.
      * @return HTTP 200 with the generated result entity.
      */
     @PostMapping(
@@ -61,9 +61,9 @@ class AiRecommenderController(
         consumes = [MediaType.APPLICATION_JSON_VALUE],
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
-    suspend fun retrieveFullRecommendation(@Valid @RequestBody messageSuggestionEntity: MessageSuggestionEntity): ResponseEntity<GenerationResultEntity> {
-        val result: GenerationResultEntity =
-            resultMapper.toEntity(aiRecommenderUseCase.recommend(messageSuggestionMapper.toModel(entity = messageSuggestionEntity)))
+    suspend fun retrieveFullRecommendation(@Valid @RequestBody requestMessageSuggestionDto: RequestMessageSuggestionDto): ResponseEntity<GenerationResultDto> {
+        val result: GenerationResultDto =
+            resultMapper.toEntity(aiRecommenderUseCase.recommend(messageSuggestionMapper.toModel(entity = requestMessageSuggestionDto)))
         return ResponseEntity.ok(result)
     }
 }

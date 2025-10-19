@@ -3,8 +3,8 @@ package infrastructure.adapters.input.web
 import application.usecase.AiRecommenderUseCase
 import domain.model.GenerationResult
 import domain.model.MessageSuggestion
-import infrastructure.adapters.entity.GenerationResultEntity
-import infrastructure.adapters.entity.MessageSuggestionEntity
+import infrastructure.adapters.dto.GenerationResultDto
+import infrastructure.adapters.dto.RequestMessageSuggestionDto
 import infrastructure.adapters.mapper.GenerationResultMapper
 import infrastructure.adapters.mapper.MessageSuggestionMapper
 import kotlinx.coroutines.flow.flowOf
@@ -38,7 +38,7 @@ class AiRecommenderControllerTest {
     @Test
     fun `retrieveRecommendations returns stream from recommender`() {
         // Arrange
-        val entity = MessageSuggestionEntity(systemMessage = "sys", userMessage = "user")
+        val entity = RequestMessageSuggestionDto(systemMessage = "sys", userMessage = "user")
         val model = MessageSuggestion(systemMessage = "sys", userMessage = "user")
 
         whenever(messageSuggestionMapper.toModel(entity)).thenReturn(model)
@@ -78,12 +78,12 @@ class AiRecommenderControllerTest {
     @Test
     fun `retrieveFullRecommendation returns generation result entity`() = runTest {
         // Arrange
-        val entity = MessageSuggestionEntity(systemMessage = "sys", userMessage = "user")
+        val entity = RequestMessageSuggestionDto(systemMessage = "sys", userMessage = "user")
         val model = MessageSuggestion(systemMessage = "sys", userMessage = "user")
-        val resultEntity = GenerationResultEntity(
+        val resultEntity = GenerationResultDto(
             fullResponse = "full",
             durationMs = 123L,
-            messageSuggestionEntity = entity
+            requestMessageSuggestionDto = entity
         )
 
         val resultModel = GenerationResult(

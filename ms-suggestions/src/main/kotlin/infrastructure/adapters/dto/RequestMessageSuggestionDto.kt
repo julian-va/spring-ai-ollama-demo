@@ -1,4 +1,4 @@
-package infrastructure.adapters.entity
+package infrastructure.adapters.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.NotBlank
@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank
  * This class is used for incoming API requests and is mapped from/to JSON properties
  * via Jackson annotations.
  */
-data class MessageSuggestionEntity(
+data class RequestMessageSuggestionDto(
     @param:JsonProperty("system_message")
     @field:NotBlank
     val systemMessage: String = "",

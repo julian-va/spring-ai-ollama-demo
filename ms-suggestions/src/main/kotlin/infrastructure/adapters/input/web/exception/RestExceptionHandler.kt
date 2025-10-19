@@ -3,7 +3,7 @@ package infrastructure.adapters.input.web.exception
 import application.exception.UseCaseException
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import domain.exception.BusinessRuleViolationException
-import infrastructure.adapters.entity.ErrorResponse
+import infrastructure.adapters.dto.ErrorResponse
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
