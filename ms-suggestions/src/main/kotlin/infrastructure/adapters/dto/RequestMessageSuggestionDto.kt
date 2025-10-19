@@ -12,9 +12,9 @@ import jakarta.validation.constraints.NotBlank
 data class RequestMessageSuggestionDto(
     @param:JsonProperty("system_message")
     @field:NotBlank
-    val systemMessage: String = "",
+    val systemMessage: String?,
 
     @param:JsonProperty("user_message")
     @field:NotBlank
-    val userMessage: String = ""
+    val userMessage: String?
 )
