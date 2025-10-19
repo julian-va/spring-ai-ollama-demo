@@ -1,6 +1,7 @@
 package jva.cloud.infrastructure.adapters.entity
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import jakarta.validation.constraints.NotBlank
 
 /**
  * DTO representing the incoming message payload: a system message and a user message.
@@ -10,8 +11,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
  */
 data class MessageSuggestionEntity(
     @param:JsonProperty("system_message")
-    val systemMessage: String,
+    @field:NotBlank
+    val systemMessage: String = "",
 
     @param:JsonProperty("user_message")
-    val userMessage: String
+    @field:NotBlank
+    val userMessage: String = ""
 )

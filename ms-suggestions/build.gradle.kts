@@ -13,6 +13,7 @@ description = "Demo project for Spring Boot"
 extra["springAiVersion"] = "1.0.3"
 
 dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-webflux")

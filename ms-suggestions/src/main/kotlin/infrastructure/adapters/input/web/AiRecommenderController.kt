@@ -1,5 +1,6 @@
 package jva.cloud.infrastructure.adapters.input.web
 
+import jakarta.validation.Valid
 import jva.cloud.application.usecase.AiRecommenderUseCase
 import jva.cloud.domain.port.out.AiRecommenderPort
 import jva.cloud.infrastructure.adapters.entity.GenerationResultEntity
@@ -43,7 +44,7 @@ class AiRecommenderController(
         consumes = [MediaType.APPLICATION_JSON_VALUE],
         produces = [MediaType.TEXT_EVENT_STREAM_VALUE]
     )
-    fun retrieveRecommendations(@RequestBody messageSuggestionEntity: MessageSuggestionEntity): Flow<String> {
+    fun retrieveRecommendations(@Valid @RequestBody messageSuggestionEntity: MessageSuggestionEntity): Flow<String> {
         return aiRecommenderUseCase.recommendStream(messageSuggestionMapper.toModel(entity = messageSuggestionEntity))
     }
 
@@ -58,7 +59,7 @@ class AiRecommenderController(
         consumes = [MediaType.APPLICATION_JSON_VALUE],
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
-    suspend fun retrieveFullRecommendation(@RequestBody messageSuggestionEntity: MessageSuggestionEntity): ResponseEntity<GenerationResultEntity> {
+    suspend fun retrieveFullRecommendation(@Valid @RequestBody messageSuggestionEntity: MessageSuggestionEntity): ResponseEntity<GenerationResultEntity> {
         val result: GenerationResultEntity =
             resultMapper.toEntity(aiRecommenderUseCase.recommend(messageSuggestionMapper.toModel(entity = messageSuggestionEntity)))
         return ResponseEntity.ok(result)
