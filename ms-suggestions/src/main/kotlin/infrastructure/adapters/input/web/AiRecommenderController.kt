@@ -1,8 +1,10 @@
 package jva.cloud.infrastructure.adapters.input.web
 
-import jva.cloud.domain.port.out.AiRecommender
+import jva.cloud.application.usecase.AiRecommenderUseCase
+import jva.cloud.domain.port.out.AiRecommenderPort
 import jva.cloud.infrastructure.adapters.entity.GenerationResultEntity
 import jva.cloud.infrastructure.adapters.entity.MessageSuggestionEntity
+import jva.cloud.infrastructure.adapters.mapper.GenerationResultMapper
 import jva.cloud.infrastructure.adapters.mapper.MessageSuggestionMapper
 import kotlinx.coroutines.flow.Flow
 import org.springframework.http.MediaType
@@ -19,14 +21,15 @@ import org.springframework.web.bind.annotation.RestController
  * endpoint that returns the full formatted generation result.
  *
  * Dependencies:
- * - [AiRecommender]: the domain port implementing recommendation logic.
+ * - [AiRecommenderPort]: the domain port implementing recommendation logic.
  * - [MessageSuggestionMapper]: maps incoming DTOs to domain models.
  */
 @RestController
 @RequestMapping(value = ["/ai/recommender"])
 class AiRecommenderController(
-    private val recommender: AiRecommender,
-    private val messageSuggestionMapper: MessageSuggestionMapper
+    private val messageSuggestionMapper: MessageSuggestionMapper,
+    private val resultMapper: GenerationResultMapper,
+    private val aiRecommenderUseCase: AiRecommenderUseCase
 ) {
 
     /**
@@ -41,7 +44,7 @@ class AiRecommenderController(
         produces = [MediaType.TEXT_EVENT_STREAM_VALUE]
     )
     fun retrieveRecommendations(@RequestBody messageSuggestionEntity: MessageSuggestionEntity): Flow<String> {
-        return recommender.recommendStream(messageSuggestionMapper.toModel(entity = messageSuggestionEntity))
+        return aiRecommenderUseCase.recommendStream(messageSuggestionMapper.toModel(entity = messageSuggestionEntity))
     }
 
     /**
@@ -57,7 +60,7 @@ class AiRecommenderController(
     )
     suspend fun retrieveFullRecommendation(@RequestBody messageSuggestionEntity: MessageSuggestionEntity): ResponseEntity<GenerationResultEntity> {
         val result: GenerationResultEntity =
-            recommender.recommend(messageSuggestionMapper.toModel(entity = messageSuggestionEntity))
+            resultMapper.toEntity(aiRecommenderUseCase.recommend(messageSuggestionMapper.toModel(entity = messageSuggestionEntity)))
         return ResponseEntity.ok(result)
     }
 }
