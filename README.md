@@ -5,19 +5,7 @@ Ollama).
 
 Resumen rápido
 
-- Añadido `PingController` con un endpoint de comprobación: `GET /api/ping`.
-- Tests para `PingController` escritos con JUnit 5 (Jupiter) y anotaciones modernas.
-- Documentación de cómo usar Ollama localmente o cómo apuntar la aplicación a un Ollama alojado en un dominio remoto.
-
-Nuevas funcionalidades
-
-- `GET /api/ping`
-    - Endpoint simple para comprobar que la aplicación está arriba y responde.
-    - Implementado en `PingController` (ubicación: `ms-suggestions/src/main/java/...` según el paquete del proyecto).
-
-- Tests unitarios/integ. para `PingController`
-    - Ubicados en `src/test/java` del módulo correspondiente.
-    - Usan JUnit 5 (Jupiter) con anotaciones modernas: `@ExtendWith`, `@BeforeEach`, `@Test`, etc.
+- Documentación y ejemplos para integrar la aplicación con Ollama (local o remoto).
 
 Requisitos mínimos
 
@@ -87,6 +75,36 @@ Endpoints importantes
 - `POST /ai/recommender`
     - Endpoint principal para recomendaciones (SSE streaming) ya existente en el proyecto.
     - Usa un payload JSON con `systemMessage` y `userMessage`.
+
+Diagrama de componentes
+
+A continuación un diagrama sencillo que muestra la relación entre el cliente, el servicio `ms-suggestions` y Ollama.
+Incluye un diagrama Mermaid (si tu plataforma lo soporta) y un diagrama ASCII de fallback.
+
+Mermaid (visualización si el renderer lo soporta):
+
+```mermaid
+graph LR
+  Client[Cliente\n(curl / script / UI)] -->|HTTP| MS[ms-suggestions\n(Spring Boot)]
+  MS -->|HTTP (Ollama API)| Ollama[Ollama\n(local o remoto)]
+  MS -->|SSE (stream)| Client
+```
+
+Diagrama ASCII (fallback):
+
+```
+Client (curl / script / UI)
+    |
+    | HTTP
+    v
+ms-suggestions (Spring Boot)
+    |
+    | HTTP -> Ollama API
+    v
+Ollama (local o remoto)
+```
+
+Y ms-suggestions puede enviar respuestas en streaming (SSE) de vuelta al cliente.
 
 Comandos útiles
 
@@ -171,3 +189,33 @@ Contacto / siguientes pasos
 Licencia
 
 - Consulte el fichero `LICENSE` en la raíz del repositorio.
+
+Arquitectura y tecnologías
+
+- Arquitectura: estilo hexagonal / puertos y adaptadores (capas claras: dominio, aplicación,
+  adaptadores/infraestructura). El código organiza los paquetes por capas (`domain`, `application`,
+  `infrastructure/adapters`), lo que facilita sustituir implementaciones (por ejemplo el cliente de Ollama) y escribir
+  tests unitarios.
+
+- Patrón de ejecución: aplicación modular (multi-módulo Gradle) con un módulo principal `ms-suggestions` empaquetado
+  como aplicación Spring Boot.
+
+- Tecnologías principales:
+    - Kotlin (principalmente) y Java (en partes del proyecto).
+    - Spring Boot (WebFlux / reactivo) para exponer la API HTTP y manejar SSE (streaming) en el endpoint
+      `/ai/recommender`.
+    - WebClient (cliente HTTP reactivo) para comunicarse con la API de Ollama.
+    - Integración con Ollama (cliente HTTP hacia `ollama.base-url`) mediante librerías Spring AI/autoconfigure presentes
+      en el proyecto.
+    - Comunicación SSE (Server-Sent Events) para streaming de recomendaciones hacia clientes.
+    - Gradle (con `gradlew` wrapper) para el build y manejo de dependencias.
+    - Docker (Dockerfile en `ms-suggestions/`) para construir imágenes del servicio.
+    - Pruebas: JUnit 5 (Jupiter) para tests unitarios e integración, con support de bibliotecas Kotlin/Mockito según
+      necesidad.
+    - OpenAPI / springdoc (documentación automática) — presente en las dependencias del módulo para exponer
+      documentación de la API.
+
+- Consideraciones operativas:
+    - La app está pensada para entornos reactivos y para integrarse con un servicio de modelo externo (Ollama) a través
+      de HTTP; por ello es importante configurar `ollama.base-url` y parámetros de timeout según entorno.
+    - Para desarrollo local es conveniente instalar Ollama y apuntar `ollama.base-url` a `http://localhost:11434`.
