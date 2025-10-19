@@ -1,14 +1,17 @@
 package jva.cloud.infrastructure.adapters.output.repository.clients
 
+import jva.cloud.application.exception.UseCaseException
 import jva.cloud.domain.port.out.AiRecommenderPort
 import jva.cloud.infrastructure.config.OllamaConfig.Companion.OLLAMA_CHAT_CLIENT
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.reactive.asFlow
 import org.springframework.ai.chat.messages.AbstractMessage
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.prompt.Prompt
 import org.springframework.ai.ollama.OllamaChatModel
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Repository
 
 /**
@@ -28,6 +31,16 @@ class LlamaClient(@param:Qualifier(OLLAMA_CHAT_CLIENT) private val chatModel: Ol
      * @return Flow emitting ChatResponse items from the model stream
      */
     override fun sentModelStream(messages: List<AbstractMessage>): Flow<ChatResponse> {
-        return chatModel.stream(Prompt(messages)).asFlow()
+        return chatModel.stream(Prompt(messages)).asFlow().catch { exception ->
+            throw UseCaseException(
+                message = String.format(ERROR_STREAMING_TEMPLATE, exception.message),
+                cause = exception,
+                httpStatus = HttpStatus.FAILED_DEPENDENCY
+            )
+        }
+    }
+
+    private companion object {
+        private const val ERROR_STREAMING_TEMPLATE = "Error streaming from Ollama model: %s"
     }
 }

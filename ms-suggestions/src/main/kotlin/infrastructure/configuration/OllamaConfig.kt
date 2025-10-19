@@ -47,7 +47,7 @@ class OllamaConfig(
      * Create and configure the Ollama chat model bean using provided options.
      */
     @Bean(name = [OLLAMA_CHAT_CLIENT])
-    fun deepseekChatClient(
+    fun ollamaChatModel(
         api: OllamaApi,
         @Value("\${ollama.llama.model}") model: String,
         @Value("\${ollama.llama.temperature}") temperature: Double,
