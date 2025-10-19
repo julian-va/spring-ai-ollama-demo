@@ -1,10 +1,10 @@
-package jva.cloud.application.service
+package application.service
 
-import jva.cloud.application.usecase.AiRecommenderUseCase
-import jva.cloud.domain.model.GenerationResult
-import jva.cloud.domain.model.MessageSuggestion
-import jva.cloud.domain.port.out.AiRecommenderPort
-import jva.cloud.infrastructure.utils.ResponseUtils
+import application.usecase.AiRecommenderUseCase
+import domain.model.GenerationResult
+import domain.model.MessageSuggestion
+import application.port.output.AiRecommenderPort
+import infrastructure.utils.ResponseUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList

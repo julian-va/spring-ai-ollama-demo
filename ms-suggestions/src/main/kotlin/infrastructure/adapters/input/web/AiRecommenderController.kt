@@ -1,15 +1,16 @@
-package jva.cloud.infrastructure.adapters.input.web
+package infrastructure.adapters.input.web
 
+import application.port.output.AiRecommenderPort
+import application.usecase.AiRecommenderUseCase
+import infrastructure.adapters.entity.GenerationResultEntity
+import infrastructure.adapters.entity.MessageSuggestionEntity
+import infrastructure.adapters.mapper.GenerationResultMapper
+import infrastructure.adapters.mapper.MessageSuggestionMapper
 import jakarta.validation.Valid
-import jva.cloud.application.usecase.AiRecommenderUseCase
-import jva.cloud.domain.port.out.AiRecommenderPort
-import jva.cloud.infrastructure.adapters.entity.GenerationResultEntity
-import jva.cloud.infrastructure.adapters.entity.MessageSuggestionEntity
-import jva.cloud.infrastructure.adapters.mapper.GenerationResultMapper
-import jva.cloud.infrastructure.adapters.mapper.MessageSuggestionMapper
 import kotlinx.coroutines.flow.Flow
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController
  * - [MessageSuggestionMapper]: maps incoming DTOs to domain models.
  */
 @RestController
+@Validated
 @RequestMapping(value = ["/ai/recommender"])
 class AiRecommenderController(
     private val messageSuggestionMapper: MessageSuggestionMapper,

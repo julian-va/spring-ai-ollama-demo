@@ -1,4 +1,4 @@
-package jva.cloud.infrastructure.utils
+package infrastructure.utils
 
 /**
  * Utilities for formatting and normalizing long textual responses produced by models.

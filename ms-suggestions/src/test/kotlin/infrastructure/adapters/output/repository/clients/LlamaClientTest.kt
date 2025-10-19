@@ -1,4 +1,4 @@
-package jva.cloud.infrastructure.adapters.output.repository.clients
+package infrastructure.adapters.output.repository.clients
 
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest

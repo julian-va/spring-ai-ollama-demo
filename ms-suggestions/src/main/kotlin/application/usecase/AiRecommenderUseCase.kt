@@ -1,7 +1,7 @@
-package jva.cloud.application.usecase
+package application.usecase
 
-import jva.cloud.domain.model.GenerationResult
-import jva.cloud.domain.model.MessageSuggestion
+import domain.model.GenerationResult
+import domain.model.MessageSuggestion
 import kotlinx.coroutines.flow.Flow
 
 /**

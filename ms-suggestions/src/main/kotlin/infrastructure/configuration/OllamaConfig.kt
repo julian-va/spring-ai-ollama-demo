@@ -1,4 +1,4 @@
-package jva.cloud.infrastructure.config
+package infrastructure.configuration
 
 import io.netty.channel.ChannelOption
 import io.netty.handler.logging.LogLevel

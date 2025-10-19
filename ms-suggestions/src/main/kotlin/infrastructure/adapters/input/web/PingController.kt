@@ -1,4 +1,4 @@
-package jva.cloud.infrastructure.adapters.input.web
+package infrastructure.adapters.input.web
 
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity

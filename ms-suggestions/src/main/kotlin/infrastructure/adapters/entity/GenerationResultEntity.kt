@@ -1,4 +1,4 @@
-package jva.cloud.infrastructure.adapters.entity
+package infrastructure.adapters.entity
 
 import com.fasterxml.jackson.annotation.JsonProperty
 

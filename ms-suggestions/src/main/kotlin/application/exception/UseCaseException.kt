@@ -1,4 +1,4 @@
-package jva.cloud.application.exception
+package application.exception
 
 import org.springframework.http.HttpStatus
 

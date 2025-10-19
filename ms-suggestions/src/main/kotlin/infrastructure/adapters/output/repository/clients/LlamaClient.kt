@@ -1,8 +1,8 @@
-package jva.cloud.infrastructure.adapters.output.repository.clients
+package infrastructure.adapters.output.repository.clients
 
-import jva.cloud.application.exception.UseCaseException
-import jva.cloud.domain.port.out.AiRecommenderPort
-import jva.cloud.infrastructure.config.OllamaConfig.Companion.OLLAMA_CHAT_CLIENT
+import application.exception.UseCaseException
+import application.port.output.AiRecommenderPort
+import infrastructure.configuration.OllamaConfig.Companion.OLLAMA_CHAT_CLIENT
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.reactive.asFlow

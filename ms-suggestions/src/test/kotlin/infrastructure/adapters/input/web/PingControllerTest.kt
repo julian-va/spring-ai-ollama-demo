@@ -1,6 +1,5 @@
 package infrastructure.adapters.input.web
 
-import jva.cloud.infrastructure.adapters.input.web.PingController
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test

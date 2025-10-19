@@ -1,7 +1,7 @@
-package jva.cloud.infrastructure.adapters.mapper
+package infrastructure.adapters.mapper
 
-import jva.cloud.domain.model.MessageSuggestion
-import jva.cloud.infrastructure.adapters.entity.MessageSuggestionEntity
+import domain.model.MessageSuggestion
+import infrastructure.adapters.entity.MessageSuggestionEntity
 import org.mapstruct.Mapper
 
 /**

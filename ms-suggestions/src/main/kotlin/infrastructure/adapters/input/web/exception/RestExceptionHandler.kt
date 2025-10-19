@@ -1,10 +1,10 @@
-package jva.cloud.infrastructure.adapters.input.web.exception
+package infrastructure.adapters.input.web.exception
 
+import application.exception.UseCaseException
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
+import domain.exception.BusinessRuleViolationException
+import infrastructure.adapters.entity.ErrorResponse
 import jakarta.validation.ConstraintViolationException
-import jva.cloud.application.exception.UseCaseException
-import jva.cloud.domain.exception.BusinessRuleViolationException
-import jva.cloud.infrastructure.adapters.entity.ErrorResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity

@@ -1,4 +1,4 @@
-package jva.cloud.domain.port.out
+package application.port.output
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.ai.chat.messages.AbstractMessage

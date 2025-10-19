@@ -1,8 +1,8 @@
-package jva.cloud.application.service
+package application.service
 
-import jva.cloud.domain.model.GenerationResult
-import jva.cloud.domain.model.MessageSuggestion
-import jva.cloud.domain.port.out.AiRecommenderPort
+import application.port.output.AiRecommenderPort
+import domain.model.GenerationResult
+import domain.model.MessageSuggestion
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals

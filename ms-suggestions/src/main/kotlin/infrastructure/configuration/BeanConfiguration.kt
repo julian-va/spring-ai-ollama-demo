@@ -1,7 +1,7 @@
-package jva.cloud.infrastructure.configuration
+package infrastructure.configuration
 
-import jva.cloud.application.service.AiRecommenderService
-import jva.cloud.domain.port.out.AiRecommenderPort
+import application.service.AiRecommenderService
+import application.port.output.AiRecommenderPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

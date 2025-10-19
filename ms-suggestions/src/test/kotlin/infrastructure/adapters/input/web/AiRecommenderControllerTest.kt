@@ -1,13 +1,12 @@
 package infrastructure.adapters.input.web
 
-import jva.cloud.application.usecase.AiRecommenderUseCase
-import jva.cloud.domain.model.GenerationResult
-import jva.cloud.domain.model.MessageSuggestion
-import jva.cloud.infrastructure.adapters.entity.GenerationResultEntity
-import jva.cloud.infrastructure.adapters.entity.MessageSuggestionEntity
-import jva.cloud.infrastructure.adapters.input.web.AiRecommenderController
-import jva.cloud.infrastructure.adapters.mapper.GenerationResultMapper
-import jva.cloud.infrastructure.adapters.mapper.MessageSuggestionMapper
+import application.usecase.AiRecommenderUseCase
+import domain.model.GenerationResult
+import domain.model.MessageSuggestion
+import infrastructure.adapters.entity.GenerationResultEntity
+import infrastructure.adapters.entity.MessageSuggestionEntity
+import infrastructure.adapters.mapper.GenerationResultMapper
+import infrastructure.adapters.mapper.MessageSuggestionMapper
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals

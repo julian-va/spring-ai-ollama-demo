@@ -1,8 +1,8 @@
-package jva.cloud.infrastructure.adapters.input.web.exception
+package infrastructure.adapters.input.web.exception
 
+import application.exception.UseCaseException
+import domain.exception.BusinessRuleViolationException
 import jakarta.validation.ConstraintViolationException
-import jva.cloud.application.exception.UseCaseException
-import jva.cloud.domain.exception.BusinessRuleViolationException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus

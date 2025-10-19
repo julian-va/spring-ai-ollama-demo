@@ -1,7 +1,7 @@
-package jva.cloud.infrastructure.adapters.mapper
+package infrastructure.adapters.mapper
 
-import jva.cloud.domain.model.GenerationResult
-import jva.cloud.infrastructure.adapters.entity.GenerationResultEntity
+import domain.model.GenerationResult
+import infrastructure.adapters.entity.GenerationResultEntity
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 
