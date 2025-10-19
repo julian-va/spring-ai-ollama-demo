@@ -1,193 +1,64 @@
-# Spring AI Ollama Demo
+# spring-ai-ollama-demo
 
-This repository demonstrates a small multi-module Java/Kotlin project intended to show how a Spring-based service can be
-integrated with AI/LLM tooling (project name references "Ollama"). The project contains a core module (`ms-suggestions`)
-that provides suggestion-related functionality and is packaged as an executable JAR and Docker image.
+Proyecto de ejemplo con Spring Boot (módulo `ms-suggestions`) que muestra integración con un backend de modelos (
+Ollama).
 
-> Assumptions
-> - The repository name suggests the project demonstrates integration with Ollama or an LLM; the codebase includes a
-    > `ms-suggestions` module built with Kotlin and packaged as a Spring Boot application (inferred from existing
-    > artifacts and a `Dockerfile`). If this assumption is incorrect, adjust the module description accordingly.
+Resumen rápido
 
-Main qualities
+- Añadido `PingController` con un endpoint de comprobación: `GET /api/ping`.
+- Tests para `PingController` escritos con JUnit 5 (Jupiter) y anotaciones modernas.
+- Documentación de cómo usar Ollama localmente o cómo apuntar la aplicación a un Ollama alojado en un dominio remoto.
 
-- Modular Gradle project: the repository uses Gradle (wrapper included) and organizes code into modules.
-- Multi-language sources: Java and Kotlin sources are present across modules.
-- Spring-based service (ms-suggestions): packaged as an executable JAR and Docker image.
-- Reproducible builds: includes `gradlew` wrapper and a `Dockerfile` for containerized runs.
-- Tests supported: Gradle tasks for running unit/integration tests.
+Nuevas funcionalidades
 
-Repository structure (high-level)
+- `GET /api/ping`
+    - Endpoint simple para comprobar que la aplicación está arriba y responde.
+    - Implementado en `PingController` (ubicación: `ms-suggestions/src/main/java/...` según el paquete del proyecto).
 
-- `ms-suggestions/` — Kotlin-based module; builds an executable JAR and includes a `Dockerfile`.
-- `buildSrc/` — Gradle build logic and helper code.
-- `src/` — (older or sample code) top-level sources if present.
-- `build.gradle.kts`, `settings.gradle.kts`, `gradlew`, `gradlew.bat` — project build configuration and wrappers.
+- Tests unitarios/integ. para `PingController`
+    - Ubicados en `src/test/java` del módulo correspondiente.
+    - Usan JUnit 5 (Jupiter) con anotaciones modernas: `@ExtendWith`, `@BeforeEach`, `@Test`, etc.
 
-Quick reference (extracted from the code)
+Requisitos mínimos
 
-- Main class (resolved): `jva.cloud.infrastructure.MsSuggestionsApplicationKt`
-- Built jars (examples found in `ms-suggestions/build/libs`):
-    - `ms-suggestions-0.0.1-SNAPSHOT.jar` (Spring Boot executable jar)
-    - `ms-suggestions-0.0.1-SNAPSHOT-plain.jar` (plain jar)
+- JDK 17+.
+- Gradle (se recomienda usar el wrapper incluido `./gradlew`).
+- Ollama instalado y funcionando en su máquina de desarrollo, OPPOR prueba con un Ollama remoto (dominio/host accesible
+  desde la app).
 
-- Default HTTP port: 8080 (Spring Boot default; if you have an `application.properties`/`application.yml` override, that
-  will take precedence).
+Ollama: formas de uso
 
-HTTP API (important endpoint)
+Puede usar Ollama de dos maneras principales:
 
-- POST /ai/recommender
-    - Consumes: application/json
-    - Produces: text/event-stream (SSE)
-    - Request body shape (JSON) — matches `MessageSuggestionEntity` in the code:
+1) Ollama local (recomendado en desarrollo)
 
-      {
-      "systemMessage": "<system instructions for the model>",
-      "userMessage": "<user text to get suggestions for>"
-      }
-
-    - Example: retrieve streaming recommendations (SSE)
-
-      ```bash
-      # Use curl with -N to disable buffering so SSE events stream to your terminal
-      curl -N -H "Content-Type: application/json" \
-        -X POST http://localhost:8080/ai/recommender \
-        -d '{"systemMessage":"You are a helpful assistant.","userMessage":"Suggest reply options for: I need help with my order"}'
-      ```
-
-      The endpoint returns Server-Sent Events (SSE) with text payloads; each event will appear as it is produced.
-
-Try it (quick examples)
-
-- Using the helper script (recommended for convenience):
+- Instalar Ollama siguiendo la documentación oficial: https://ollama.com
+- Ejecutar el servicio localmente (según la guía de Ollama). Por convención la API local suele exponerse en
+  `http://localhost:11434`, pero confirme según la versión de Ollama.
+- Verificar que el servicio responde a la ruta de modelos:
 
 ```bash
-# Make sure the app is running (bootRun or jar) and then execute the script
-ms-suggestions/scripts/stream_suggestions.sh "You are a helpful assistant." "Suggest reply options for: I need help with my order" sse_output.txt
-
-# The script requires 'jq' to build the JSON payload. It will write streamed events to sse_output.txt
+curl http://localhost:11434/v1/models
 ```
 
-- Direct curl (SSE streaming):
+2) Ollama alojado en un dominio remoto
 
-```bash
-curl -N -H "Content-Type: application/json" \
-  -X POST http://localhost:8080/ai/recommender \
-  -d '{"systemMessage":"You are a helpful assistant.","userMessage":"Suggest reply options for: I need help with my order"}'
-```
+- Si dispone de un Ollama en otro host (por ejemplo `https://mi-ollama.example.com`), configure la aplicación para
+  apuntar a esa URL.
+- Asegúrese de que la aplicación pueda acceder al dominio (certificados TLS, reglas de firewall, autenticación si
+  aplica).
 
-- HTTPie (if you prefer HTTPie):
+Configuración de la aplicación (properties / env)
 
-```bash
-http --stream POST http://localhost:8080/ai/recommender Content-Type:application/json \
-  systemMessage='You are a helpful assistant.' userMessage='Suggest reply options for: I need help with my order'
-```
+La configuración de Ollama puede proporcionarse mediante `application.yml`/`application.properties` o mediante variables
+de entorno (Spring Boot relaxed binding).
 
-Run / Build
-
-1. Build the project (from repository root):
-
-```bash
-./gradlew clean build
-```
-
-2. Run the `ms-suggestions` module directly with Gradle (recommended during development):
-
-```bash
-./gradlew :ms-suggestions:bootRun
-```
-
-This uses the Spring Boot plugin and will start the application (main class shown above).
-
-3. Run the built jar after `./gradlew build`:
-
-```bash
-# Example path; adjust version if different
-java -jar ms-suggestions/build/libs/ms-suggestions-0.0.1-SNAPSHOT.jar
-```
-
-Docker
-
-To build and run the `ms-suggestions` Docker image (Docker must be installed and running):
-
-```bash
-# build image
-docker build -t ms-suggestions:latest -f ms-suggestions/Dockerfile ms-suggestions
-
-# run container (example)
-docker run --rm -p 8080:8080 ms-suggestions:latest
-```
-
-Configuration and environment
-
-- Check `ms-suggestions/src/main/resources` for `application.properties` or `application.yml` if you need to change the
-  port or other settings.
-- If the project integrates with an LLM backend (Ollama or similar), set any required API URL/credentials via
-  environment variables before running. The project uses `spring-ai-starter-model-ollama` according to the module
-  dependencies, so review the module documentation or code that configures the Ollama model for exact env vars.
-
-Development notes
-
-- Use the Gradle wrapper to ensure consistent builds across environments: `./gradlew`.
-- IDEs like IntelliJ IDEA will import the Gradle project and detect Kotlin/Java sources automatically.
-
-Troubleshooting
-
-- Build fails: run `./gradlew clean build --stacktrace` and inspect the output.
-- Missing JAR or wrong main class: verify `ms-suggestions` module's Gradle settings; the resolved main class is listed
-  above.
-- SSE not streaming: use `curl -N` (or an SSE-capable client) to receive events as they are produced; some HTTP clients
-  buffer responses by default.
-
-Contributing (short guide)
-
-1. Fork the repository and create a feature branch off `main` (or the mainline branch you use):
-
-```bash
-git checkout -b feature/your-feature
-```
-
-2. Add tests for new behavior and run the test suite locally:
-
-```bash
-./gradlew test
-```
-
-3. Commit, push, and open a Pull Request describing your changes.
-
-License
-
-- See `LICENSE` in the repository root.
-
-Contact / Next steps
-
-- I can also:
-    - Add example curl requests and small scripts to parse SSE output into files.
-    - Inspect `ms-suggestions/src/main/resources` and any config classes to extract exact environment variables used for
-      Ollama integration and add them to this README.
-    - Add a tiny Postman/HTTPie collection for easier manual testing.
-
-Ollama configuration (exact properties)
-
-The module `ms-suggestions` contains an `OllamaConfig` class that reads the following Spring properties. You can set
-them in `application.properties`/`application.yml`, or provide them via environment variables when starting the app (
-Spring Boot will map environment variables using relaxed binding).
-
-- `ollama.base-url` — Base URL of the Ollama API (e.g. `http://localhost:11434`).
-- `ollama.llama.model` — Model identifier to use (example: `llama2` or a local model name).
-- `ollama.llama.temperature` — Model temperature (double).
-- `ollama.llama.numPredict` — Number of tokens to predict (int).
-- `ollama.llama.keepAlive` — Keep-alive option for the model (string).
-- `ollama.llama.numGPU` — Number of GPUs to use (int).
-- `ollama.connect-timeout-ms` — Connection timeout in milliseconds (int).
-- `ollama.response-timeout-s` — Response timeout in seconds (long).
-
-Example `application.properties` snippet (place under `ms-suggestions/src/main/resources` or in your active
-configuration):
+Ejemplo `application.properties` (colocar en `ms-suggestions/src/main/resources` o en la configuración activa):
 
 ```properties
-# Ollama example config
+# URL base del servicio Ollama
 ollama.base-url=http://localhost:11434
+# Identificador del modelo a usar (ajustar a su instalación)
 ollama.llama.model=ollama/local-model
 ollama.llama.temperature=0.7
 ollama.llama.numPredict=128
@@ -197,20 +68,106 @@ ollama.connect-timeout-ms=10000
 ollama.response-timeout-s=60
 ```
 
-Example: pass the same settings as environment variables (Docker or runtime):
+Ejemplo de variables de entorno equivalentes (útil para Docker):
+
+```bash
+export OLLAMA_BASE_URL=http://localhost:11434
+export OLLAMA_LLAMA_MODEL=ollama/local-model
+export OLLAMA_LLAMA_TEMPERATURE=0.7
+export OLLAMA_CONNECT_TIMEOUT_MS=10000
+```
+
+Nota: Spring Boot mapeará `OLLAMA_BASE_URL` a la propiedad `ollama.base-url` gracias al relaxed binding.
+
+Endpoints importantes
+
+- `GET /api/ping`
+    - Comprobación básica de disponibilidad (devuelve 200 OK y un cuerpo simple, p.ej. `{ "status": "ok" }`).
+
+- `POST /ai/recommender`
+    - Endpoint principal para recomendaciones (SSE streaming) ya existente en el proyecto.
+    - Usa un payload JSON con `systemMessage` y `userMessage`.
+
+Comandos útiles
+
+- Construir el proyecto:
+
+```bash
+./gradlew clean build
+```
+
+- Ejecutar el módulo `ms-suggestions` en modo desarrollo:
+
+```bash
+./gradlew :ms-suggestions:bootRun
+```
+
+- Ejecutar tests:
+
+```bash
+./gradlew test
+```
+
+- Probar el `ping` (si la app está corriendo en localhost:8080):
+
+```bash
+curl -sS http://localhost:8080/api/ping
+```
+
+- Probar el recommender (SSE):
+
+```bash
+curl -N -H "Content-Type: application/json" -X POST http://localhost:8080/ai/recommender \
+  -d '{"systemMessage":"You are a helpful assistant.","userMessage":"Suggest reply options for: I need help with my order"}'
+```
+
+Docker
+
+- Construir imagen del módulo `ms-suggestions`:
+
+```bash
+docker build -t ms-suggestions:latest -f ms-suggestions/Dockerfile ms-suggestions
+```
+
+- Ejecutar contenedor y pasar configuración de Ollama si es necesario:
 
 ```bash
 docker run --rm -p 8080:8080 \
   -e OLLAMA_BASE_URL=http://10.0.0.2:11434 \
-  -e OLLAMA_LLAMA_MODEL=ollama/local-model \
-  -e OLLAMA_LLAMA_TEMPERATURE=0.7 \
-  -e OLLAMA_CONNECT_TIMEOUT_MS=10000 \
   ms-suggestions:latest
 ```
 
-Note: Spring Boot relaxed binding maps environment variables like `OLLAMA_BASE_URL` to the property `ollama.base-url`.
+Notas y recomendaciones
 
-Bean names used in the code
+- Para desarrollo local se recomienda instalar Ollama en la misma máquina y usar `http://localhost:11434` como
+  `ollama.base-url`.
+- Para entornos de prueba/producción, puede apuntar a un Ollama desplegado en un dominio o servicio gestionado; en ese
+  caso, documente las credenciales/seguridad necesarias y asegúrese de usar HTTPS.
+- Si el Ollama remoto requiere autenticación adicional, ajuste la configuración del cliente HTTP/WebClient del proyecto
+  para incluir los encabezados o mecanismos necesarios.
 
-- The `OllamaConfig` class exposes a chat client bean named `"ollama"` (available by qualifier `@Qualifier("ollama")`).
-- A separate WebClient builder is named `"ollama-webclient"`.
+Contribuir
+
+1. Cree una rama a partir de `main`:
+
+```bash
+git checkout -b feature/mi-nueva-funcionalidad
+```
+
+2. Añada tests y ejecute el suite localmente:
+
+```bash
+./gradlew test
+```
+
+3. Haga commit, push y abra un Pull Request.
+
+Contacto / siguientes pasos
+
+- Puedo añadir ejemplos de curl adicionales, o una pequeña colección para Postman/HTTPie.
+- Si desea, agrego el código de `PingController` y su test (si aún no están) y ejecuto los tests para confirmar que
+  pasan.
+
+Licencia
+
+- Consulte el fichero `LICENSE` en la raíz del repositorio.
