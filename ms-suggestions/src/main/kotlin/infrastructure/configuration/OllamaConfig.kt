@@ -38,6 +38,8 @@ class OllamaConfig(
     @param:Value("\${ollama.base-url}")
     private val baseUrl: String
 ) {
+    private val logger = LoggerFactory.getLogger(OllamaConfig::class.java)
+
     companion object {
         const val OLLAMA_CHAT_CLIENT: String = "ollama"
         private const val OLLAMA_WEBCLIENT: String = "ollama-webclient"
@@ -101,8 +103,6 @@ class OllamaConfig(
         @Value("\${ollama.response-timeout-s}") responseTimeoutSeconds: Long
     ): WebClient.Builder {
 
-
-        val logger = LoggerFactory.getLogger(OllamaConfig::class.java)
 
         val connectionProvider = ConnectionProvider.builder("ollama-pool")
             .maxConnections(100)
