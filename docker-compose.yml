@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  ollama-service:
+    image: ollama/ollama:latest
+    container_name: ollama_container
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+    runtime: nvidia
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_MODELS=/root/.ollama/models
+      - NVIDIA_VISIBLE_DEVICES=all
+    #entrypoint: /bin/sh
+    #command: -c "ollama serve & sleep 5 && ollama pull llama3:8b && wait" ## para descargar el modelo al iniciar el contenedor
+    networks:
+      - app_net
+
+
+  spring-boot-service-ms-suggestions:
+    container_name: ms-suggestions-app
+    image: ms-suggestions
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: ms-suggestions/Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - ollama-service
+    environment:
+      - SPRING_AI_OLLAMA_BASE_URL=http://ollama-service:11434
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_AI_OLLAMA_MODEL=llama3:8b
+    networks:
+      - app_net
+
+
+volumes:
+  ollama-data:
+
+networks:
+  app_net:
+    driver: bridge

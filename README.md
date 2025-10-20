@@ -1,216 +1,310 @@
-# Spring AI Ollama Demo
+# spring-ai-ollama-demo
 
-This repository demonstrates a small multi-module Java/Kotlin project intended to show how a Spring-based service can be
-integrated with AI/LLM tooling (project name references "Ollama"). The project contains a core module (`ms-suggestions`)
-that provides suggestion-related functionality and is packaged as an executable JAR and Docker image.
+Proyecto de ejemplo con Spring Boot (módulo `ms-suggestions`) que muestra integración con un backend de modelos (
+Ollama).
 
-> Assumptions
-> - The repository name suggests the project demonstrates integration with Ollama or an LLM; the codebase includes a
-    > `ms-suggestions` module built with Kotlin and packaged as a Spring Boot application (inferred from existing
-    > artifacts and a `Dockerfile`). If this assumption is incorrect, adjust the module description accordingly.
+Nuevas funcionalidades y notas importantes
 
-Main qualities
+- Configuración de red interna con Docker Compose (servicios se resuelven por nombre o alias dentro de la misma red).
+- Soporte para ejecutar Ollama con GPU (nota: requiere drivers y configuración del host y del Docker daemon).
+- Variables de entorno recomendadas para producción con `SPRING_AI_OLLAMA_BASE_URL` y `SPRING_AI_OLLAMA_MODEL`.
+- Healthcheck para Ollama y ejemplos de cómo probar la conexión desde dentro de la red de Compose.
+- Recomendaciones para evitar errores comunes de `WebClient` (p. ej. "Host is not specified").
 
-- Modular Gradle project: the repository uses Gradle (wrapper included) and organizes code into modules.
-- Multi-language sources: Java and Kotlin sources are present across modules.
-- Spring-based service (ms-suggestions): packaged as an executable JAR and Docker image.
-- Reproducible builds: includes `gradlew` wrapper and a `Dockerfile` for containerized runs.
-- Tests supported: Gradle tasks for running unit/integration tests.
+Resumen rápido
 
-Repository structure (high-level)
+- Documentación y ejemplos para integrar la aplicación con Ollama (local o remoto).
 
-- `ms-suggestions/` — Kotlin-based module; builds an executable JAR and includes a `Dockerfile`.
-- `buildSrc/` — Gradle build logic and helper code.
-- `src/` — (older or sample code) top-level sources if present.
-- `build.gradle.kts`, `settings.gradle.kts`, `gradlew`, `gradlew.bat` — project build configuration and wrappers.
+Requisitos mínimos
 
-Quick reference (extracted from the code)
+- JDK 17+.
+- Gradle (se recomienda usar el wrapper incluido `./gradlew`).
+- Docker y Docker Compose (usar `docker compose` preferiblemente). Si quiere ejecutar con GPU: drivers NVIDIA y
+  `nvidia-container-toolkit` si trabaja en Linux.
 
-- Main class (resolved): `jva.cloud.infrastructure.MsSuggestionsApplicationKt`
-- Built jars (examples found in `ms-suggestions/build/libs`):
-    - `ms-suggestions-0.0.1-SNAPSHOT.jar` (Spring Boot executable jar)
-    - `ms-suggestions-0.0.1-SNAPSHOT-plain.jar` (plain jar)
+Ollama: formas de uso
 
-- Default HTTP port: 8080 (Spring Boot default; if you have an `application.properties`/`application.yml` override, that
-  will take precedence).
+Puede usar Ollama de dos maneras principales:
 
-HTTP API (important endpoint)
+1) Ollama local (recomendado en desarrollo)
 
-- POST /ai/recommender
-    - Consumes: application/json
-    - Produces: text/event-stream (SSE)
-    - Request body shape (JSON) — matches `MessageSuggestionEntity` in the code:
-
-      {
-      "systemMessage": "<system instructions for the model>",
-      "userMessage": "<user text to get suggestions for>"
-      }
-
-    - Example: retrieve streaming recommendations (SSE)
-
-      ```bash
-      # Use curl with -N to disable buffering so SSE events stream to your terminal
-      curl -N -H "Content-Type: application/json" \
-        -X POST http://localhost:8080/ai/recommender \
-        -d '{"systemMessage":"You are a helpful assistant.","userMessage":"Suggest reply options for: I need help with my order"}'
-      ```
-
-      The endpoint returns Server-Sent Events (SSE) with text payloads; each event will appear as it is produced.
-
-Try it (quick examples)
-
-- Using the helper script (recommended for convenience):
+- Instalar Ollama siguiendo la documentación oficial: https://ollama.com
+- Ejecutar el servicio localmente. Por convención la API local suele exponerse en `http://localhost:11434` (confirme
+  según su versión).
+- Verificar que el servicio responde a la ruta de modelos:
 
 ```bash
-# Make sure the app is running (bootRun or jar) and then execute the script
-ms-suggestions/scripts/stream_suggestions.sh "You are a helpful assistant." "Suggest reply options for: I need help with my order" sse_output.txt
-
-# The script requires 'jq' to build the JSON payload. It will write streamed events to sse_output.txt
+curl http://localhost:11434/v1/models
 ```
 
-- Direct curl (SSE streaming):
+2) Ollama dentro de Docker (recomendado para reproducibilidad)
+
+- En este repo hay un `docker-compose.yml` de ejemplo que levanta Ollama y `ms-suggestions` en una red interna
+  `app_net`.
+- Nota importante: no use guiones bajos en los aliases/hosts porque en algunas APIs de URI (JVM) no son válidos; use
+  `ollama-service` como alias si necesita un nombre sin guion bajo.
+
+Configuración recomendada de `docker-compose.yml` (puntos clave)
+
+- Mantener la variable que usa la app:
+    - `SPRING_AI_OLLAMA_BASE_URL=http://ollama-service:11434`  <- NO cambiar esto para la app, debe resolver dentro de
+      la red.
+- Pasar el modelo con dos puntos entre comillas o via `.env`:
+    - `SPRING_AI_OLLAMA_MODEL: "llama3:8b"`
+
+Ejemplo mínimo (fragmento relevante):
+
+```yaml
+services:
+  ollama-service:
+    image: ollama/ollama:latest
+    container_name: ollama_container
+    volumes:
+      - ollama-data:/root/.ollama
+    # si usa GPU en host y tiene nvidia-container-toolkit/daemon configurado, puede usar runtime: nvidia
+    # runtime: nvidia  # legacy
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_MODELS=/root/.ollama/models
+    networks:
+      app_net:
+        aliases:
+          - ollama-service
+
+  spring-boot-service-ms-suggestions:
+    build: ./ms-suggestions
+    environment:
+      SPRING_AI_OLLAMA_BASE_URL: "http://ollama-service:11434"
+      SPRING_AI_OLLAMA_MODEL: "llama3:8b"
+      SPRING_PROFILES_ACTIVE: "prod"
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
+volumes:
+  ollama-data:
+```
+
+Nota sobre mapeo de puertos y conflictos en el host
+
+- Si publica Ollama en el host con `ports: - "11434:11434"` y el puerto ya está en uso, Compose fallará con
+  `address already in use`.
+- Solución: cambiar sólo el puerto host (ej. `11435:11434`) o eliminar la sección `ports` para que Ollama sea accesible
+  sólo desde la red interna (más seguro).
+- Si cambia el puerto mapeado en el host, la app que corre dentro de Compose NO necesita cambiar
+  `SPRING_AI_OLLAMA_BASE_URL` (la app habla con el nombre del servicio interno). Debe cambiar únicamente comandos curl
+  desde el host que apunten a `localhost:11435`.
+
+Healthcheck y arranque fiable
+
+- Añadir un `healthcheck` en `docker-compose.yml` para Ollama ayuda a `depends_on` a ser más expresivo (Compose v3 no
+  espera por salud por defecto, pero sirve para diagnóstico):
+
+```yaml
+healthcheck:
+  test: [ "CMD", "curl", "-f", "http://localhost:11434/v1/models" ]
+  interval: 10s
+  timeout: 5s
+  retries: 6
+```
+
+GPU vs CPU: cómo saber si Ollama está usando GPU
+
+- El log de Ollama muestra qué backend carga, por ejemplo:
+  `load_backend: loaded CPU backend from /usr/lib/ollama/libggml-cpu-haswell.so` indica CPU.
+- Para usar GPU dentro de Docker necesitas:
+    1. Drivers GPU en el host (p. ej. NVIDIA drivers).
+    2. `nvidia-container-toolkit` (o el equivalente para tu plataforma) instalado.
+    3. Configurar Docker para exponer la GPU (en Compose local a veces se usan `device_requests` o `runtime: nvidia` en
+       instalaciones legacy).
+
+Ejemplo breve para Compose (si su Docker soporta `device_requests`):
+
+```yaml
+services:
+  ollama-service:
+    image: ollama/ollama:latest
+    device_requests:
+      - driver: nvidia
+        count: all
+        capabilities: [ "gpu" ]
+```
+
+Si el validador de Compose en su máquina da error con `device_requests`, puede usar el enfoque legacy
+`runtime: nvidia` + `NVIDIA_VISIBLE_DEVICES=all` (requerirá que el daemon tenga configurado ese runtime).
+
+Comprobaciones útiles (diagnóstico)
+
+- Ver red y contenedores conectados:
 
 ```bash
-curl -N -H "Content-Type: application/json" \
-  -X POST http://localhost:8080/ai/recommender \
-  -d '{"systemMessage":"You are a helpful assistant.","userMessage":"Suggest reply options for: I need help with my order"}'
+docker network ls --filter name=spring-ai-ollama-demo_app_net
+docker network inspect spring-ai-ollama-demo_app_net
 ```
 
-- HTTPie (if you prefer HTTPie):
+- Probar Ollama desde dentro de la red:
 
 ```bash
-http --stream POST http://localhost:8080/ai/recommender Content-Type:application/json \
-  systemMessage='You are a helpful assistant.' userMessage='Suggest reply options for: I need help with my order'
+docker run --rm --network spring-ai-ollama-demo_app_net curlimages/curl:8.1.2 -sS http://ollama-service:11434/v1/models
 ```
 
-Run / Build
+- Ver logs en tiempo real:
 
-1. Build the project (from repository root):
+```bash
+docker compose logs -f ollama-service
+docker compose logs -f ms-suggestions-app
+```
+
+- Comprobar variables de entorno dentro del contenedor de la app:
+
+```bash
+docker compose exec ms-suggestions-app printenv SPRING_AI_OLLAMA_BASE_URL
+```
+
+- Si habilitó GPU y la imagen lo soporta, comprobar dentro del contenedor:
+
+```bash
+docker compose exec ollama-service nvidia-smi
+```
+
+Evitar el error WebClient: "Host is not specified"
+
+Síntomas: `WebClientRequestException: Host is not specified` al intentar hacer una petición a
+`http://ollama_service:11434/...`.
+
+Causas y soluciones:
+
+- Hostname inválido para construcción de URI. Evite usar guion bajo `_` en alias/host. Use `ollama-service` o `ollama` (
+  sin `_`) como nombre de host/alias.
+- Asegurar que la variable de entorno que la app usa (`SPRING_AI_OLLAMA_BASE_URL`) está presente dentro del contenedor y
+  no está vacía:
+
+```bash
+docker compose exec ms-suggestions-app printenv SPRING_AI_OLLAMA_BASE_URL
+```
+
+- Preferir definir variables en el `docker-compose.yml` como mapping (clave: valor) para evitar parseos raros:
+
+```yaml
+environment:
+  SPRING_AI_OLLAMA_BASE_URL: "http://ollama-service:11434"
+  SPRING_AI_OLLAMA_MODEL: "llama3:8b"
+```
+
+- Asegurarse de que la configuración de Spring está usando el prefijo correcto: `spring.ai.ollama.base-url` o una
+  propiedad que su configuración realmente lea. En este proyecto recomendamos `SPRING_AI_OLLAMA_BASE_URL` y binding en
+  `application-prod.yml`.
+
+Curles útiles (ejemplos)
+
+- Desde el host (si Ollama está publicado en `localhost:11435` en el host):
+
+```bash
+curl -sS -X POST "http://localhost:11435/api/chat" \
+  -H "Content-Type: application/json" \
+  --data-raw '{
+    "model": "llama3:8b",
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "Resume en 2 frases qué hace Docker Compose."}
+    ]
+  }'
+```
+
+- Desde la red interna (ejecutando curl en un contenedor que comparte la red):
+
+```bash
+docker run --rm --network spring-ai-ollama-demo_app_net curlimages/curl:8.1.2 -sS -X POST http://ollama-service:11434/api/chat \
+  -H "Content-Type: application/json" \
+  --data-raw '{"model":"llama3:8b","messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Hola"}]}'
+```
+
+Cómo pasar `llama3:8b` en `docker-compose.yml`
+
+- Use comillas si usa el formato mapa (recomendado):
+
+```yaml
+environment:
+  SPRING_AI_OLLAMA_MODEL: "llama3:8b"
+```
+
+- Alternativamente coloque en un `.env` y use `env_file` si prefiere separar secretos/ajustes.
+
+Cómo descargar un modelo automáticamente en el inicio del contenedor (opcional)
+
+- Si desea que el contenedor Ollama intente descargar un modelo al arrancar, puede usar un `entrypoint` o `command` que
+  lance `ollama serve` en background y luego ejecute `ollama pull`. Ejemplo (sólo si lo necesita):
+
+```yaml
+entrypoint: [ "/bin/sh", "-c" ]
+command: -c "ollama serve & sleep 5 && ollama pull llama3:8b && wait"
+```
+
+(Usar con precaución: puede complicar el arranque y los healthchecks.)
+
+Comandos útiles del proyecto
+
+- Construir el proyecto:
 
 ```bash
 ./gradlew clean build
 ```
 
-2. Run the `ms-suggestions` module directly with Gradle (recommended during development):
+- Ejecutar el módulo `ms-suggestions` en modo desarrollo:
 
 ```bash
 ./gradlew :ms-suggestions:bootRun
 ```
 
-This uses the Spring Boot plugin and will start the application (main class shown above).
-
-3. Run the built jar after `./gradlew build`:
-
-```bash
-# Example path; adjust version if different
-java -jar ms-suggestions/build/libs/ms-suggestions-0.0.1-SNAPSHOT.jar
-```
-
-Docker
-
-To build and run the `ms-suggestions` Docker image (Docker must be installed and running):
-
-```bash
-# build image
-docker build -t ms-suggestions:latest -f ms-suggestions/Dockerfile ms-suggestions
-
-# run container (example)
-docker run --rm -p 8080:8080 ms-suggestions:latest
-```
-
-Configuration and environment
-
-- Check `ms-suggestions/src/main/resources` for `application.properties` or `application.yml` if you need to change the
-  port or other settings.
-- If the project integrates with an LLM backend (Ollama or similar), set any required API URL/credentials via
-  environment variables before running. The project uses `spring-ai-starter-model-ollama` according to the module
-  dependencies, so review the module documentation or code that configures the Ollama model for exact env vars.
-
-Development notes
-
-- Use the Gradle wrapper to ensure consistent builds across environments: `./gradlew`.
-- IDEs like IntelliJ IDEA will import the Gradle project and detect Kotlin/Java sources automatically.
-
-Troubleshooting
-
-- Build fails: run `./gradlew clean build --stacktrace` and inspect the output.
-- Missing JAR or wrong main class: verify `ms-suggestions` module's Gradle settings; the resolved main class is listed
-  above.
-- SSE not streaming: use `curl -N` (or an SSE-capable client) to receive events as they are produced; some HTTP clients
-  buffer responses by default.
-
-Contributing (short guide)
-
-1. Fork the repository and create a feature branch off `main` (or the mainline branch you use):
-
-```bash
-git checkout -b feature/your-feature
-```
-
-2. Add tests for new behavior and run the test suite locally:
+- Ejecutar tests:
 
 ```bash
 ./gradlew test
 ```
 
-3. Commit, push, and open a Pull Request describing your changes.
-
-License
-
-- See `LICENSE` in the repository root.
-
-Contact / Next steps
-
-- I can also:
-    - Add example curl requests and small scripts to parse SSE output into files.
-    - Inspect `ms-suggestions/src/main/resources` and any config classes to extract exact environment variables used for
-      Ollama integration and add them to this README.
-    - Add a tiny Postman/HTTPie collection for easier manual testing.
-
-Ollama configuration (exact properties)
-
-The module `ms-suggestions` contains an `OllamaConfig` class that reads the following Spring properties. You can set
-them in `application.properties`/`application.yml`, or provide them via environment variables when starting the app (
-Spring Boot will map environment variables using relaxed binding).
-
-- `ollama.base-url` — Base URL of the Ollama API (e.g. `http://localhost:11434`).
-- `ollama.llama.model` — Model identifier to use (example: `llama2` or a local model name).
-- `ollama.llama.temperature` — Model temperature (double).
-- `ollama.llama.numPredict` — Number of tokens to predict (int).
-- `ollama.llama.keepAlive` — Keep-alive option for the model (string).
-- `ollama.llama.numGPU` — Number of GPUs to use (int).
-- `ollama.connect-timeout-ms` — Connection timeout in milliseconds (int).
-- `ollama.response-timeout-s` — Response timeout in seconds (long).
-
-Example `application.properties` snippet (place under `ms-suggestions/src/main/resources` or in your active
-configuration):
-
-```properties
-# Ollama example config
-ollama.base-url=http://localhost:11434
-ollama.llama.model=ollama/local-model
-ollama.llama.temperature=0.7
-ollama.llama.numPredict=128
-ollama.llama.keepAlive=none
-ollama.llama.numGPU=0
-ollama.connect-timeout-ms=10000
-ollama.response-timeout-s=60
-```
-
-Example: pass the same settings as environment variables (Docker or runtime):
+- Construir imagen Docker del módulo `ms-suggestions`:
 
 ```bash
-docker run --rm -p 8080:8080 \
-  -e OLLAMA_BASE_URL=http://10.0.0.2:11434 \
-  -e OLLAMA_LLAMA_MODEL=ollama/local-model \
-  -e OLLAMA_LLAMA_TEMPERATURE=0.7 \
-  -e OLLAMA_CONNECT_TIMEOUT_MS=10000 \
-  ms-suggestions:latest
+docker build -t ms-suggestions:latest -f ms-suggestions/Dockerfile ms-suggestions
 ```
 
-Note: Spring Boot relaxed binding maps environment variables like `OLLAMA_BASE_URL` to the property `ollama.base-url`.
+Depuración y siguientes pasos
 
-Bean names used in the code
+- Si vuelve a ver `Host is not specified`, inspeccione el valor de `SPRING_AI_OLLAMA_BASE_URL` dentro del contenedor,
+  cambie el alias a uno que no use `_` y asegúrese que la app carga el perfil `prod` si usa `application-prod.yml`.
+- Puedo añadir un script de espera (wait-for) para que la app solo intente conectar cuando Ollama esté sano, o añadir un
+  health check más completo para Ollama.
 
-- The `OllamaConfig` class exposes a chat client bean named `"ollama"` (available by qualifier `@Qualifier("ollama")`).
-- A separate WebClient builder is named `"ollama-webclient"`.
+Contribuir
+
+1. Cree una rama a partir de `main`:
+
+```bash
+git checkout -b feature/mi-nueva-funcionalidad
+```
+
+2. Añada tests y ejecute el suite localmente:
+
+```bash
+./gradlew test
+```
+
+3. Haga commit, push y abra un Pull Request.
+
+Contacto / siguientes pasos
+
+- Puedo añadir ejemplos de curl adicionales, un Postman collection o automatizar la descarga del modelo al inicio si lo
+  desea.
+
+Licencia
+
+- Consulte el fichero `LICENSE` en la raíz del repositorio.
+
+Arquitectura y tecnologías
+
+- Arquitectura: estilo hexagonal / puertos y adaptadores (capas claras: dominio, aplicación,
+  adaptadores/infraestructura). El código organiza los paquetes por capas (`domain`, `application`,
+  `infrastructure/adapters`).
+- Tecnologías principales: Kotlin, Spring Boot (WebFlux), WebClient, Ollama integration, SSE streaming, Gradle, Docker.

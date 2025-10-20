@@ -1,23 +1,26 @@
-package jva.cloud.infrastructure.adapters.mapper
+package infrastructure.adapters.mapper
 
-import jva.cloud.domain.model.GenerationResult
-import jva.cloud.infrastructure.adapters.entity.GenerationResultEntity
+import domain.model.GenerationResult
+import infrastructure.adapters.dto.GenerationResultDto
 import org.mapstruct.Mapper
+import org.mapstruct.Mapping
 
 /**
  * MapStruct mapper to convert between the domain [GenerationResult]
- * and the persistence [GenerationResultEntity] representations.
+ * and the persistence [GenerationResultDto] representations.
  * Implemented by MapStruct at build time (component model: spring).
  */
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = [MessageSuggestionMapper::class])
 interface GenerationResultMapper {
     /**
      * Convert a persistence entity to a domain model.
      */
-    fun toModel(entity: GenerationResultEntity): GenerationResult
+    @Mapping(source = "requestMessageSuggestionDto", target = "messageSuggestion")
+    fun toModel(entity: GenerationResultDto): GenerationResult
 
     /**
      * Convert a domain model to a persistence entity.
      */
-    fun toEntity(model: GenerationResult): GenerationResultEntity
+    @Mapping(source = "messageSuggestion", target = "requestMessageSuggestionDto")
+    fun toEntity(model: GenerationResult): GenerationResultDto
 }

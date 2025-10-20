@@ -1,6 +1,7 @@
-package jva.cloud.infrastructure.adapters.entity
+package infrastructure.adapters.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import jakarta.validation.constraints.NotBlank
 
 /**
  * DTO representing the incoming message payload: a system message and a user message.
@@ -8,10 +9,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * This class is used for incoming API requests and is mapped from/to JSON properties
  * via Jackson annotations.
  */
-data class MessageSuggestionEntity(
+data class RequestMessageSuggestionDto(
     @param:JsonProperty("system_message")
-    val systemMessage: String,
+    @field:NotBlank
+    val systemMessage: String?,
 
     @param:JsonProperty("user_message")
-    val userMessage: String
+    @field:NotBlank
+    val userMessage: String?
 )
