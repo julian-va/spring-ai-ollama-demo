@@ -1,13 +1,13 @@
 package infrastructure.adapters.input.web
 
-import jva.cloud.domain.model.MessageSuggestion
-import jva.cloud.domain.port.out.AiRecommender
-import jva.cloud.infrastructure.adapters.entity.GenerationResultEntity
-import jva.cloud.infrastructure.adapters.entity.MessageSuggestionEntity
-import jva.cloud.infrastructure.adapters.input.web.AiRecommenderController
-import jva.cloud.infrastructure.adapters.mapper.MessageSuggestionMapper
+import application.usecase.AiRecommenderUseCase
+import domain.model.GenerationResult
+import domain.model.MessageSuggestion
+import infrastructure.adapters.dto.GenerationResultDto
+import infrastructure.adapters.dto.RequestMessageSuggestionDto
+import infrastructure.adapters.mapper.GenerationResultMapper
+import infrastructure.adapters.mapper.MessageSuggestionMapper
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -24,7 +24,10 @@ import org.springframework.test.web.reactive.server.WebTestClient
 class AiRecommenderControllerTest {
 
     @Mock
-    lateinit var recommender: AiRecommender
+    lateinit var recommender: AiRecommenderUseCase
+
+    @Mock
+    lateinit var resultMapper: GenerationResultMapper
 
     @Mock
     lateinit var messageSuggestionMapper: MessageSuggestionMapper
@@ -35,7 +38,7 @@ class AiRecommenderControllerTest {
     @Test
     fun `retrieveRecommendations returns stream from recommender`() {
         // Arrange
-        val entity = MessageSuggestionEntity(systemMessage = "sys", userMessage = "user")
+        val entity = RequestMessageSuggestionDto(systemMessage = "sys", userMessage = "user")
         val model = MessageSuggestion(systemMessage = "sys", userMessage = "user")
 
         whenever(messageSuggestionMapper.toModel(entity)).thenReturn(model)
@@ -75,17 +78,24 @@ class AiRecommenderControllerTest {
     @Test
     fun `retrieveFullRecommendation returns generation result entity`() = runTest {
         // Arrange
-        val entity = MessageSuggestionEntity(systemMessage = "sys", userMessage = "user")
+        val entity = RequestMessageSuggestionDto(systemMessage = "sys", userMessage = "user")
         val model = MessageSuggestion(systemMessage = "sys", userMessage = "user")
-        val resultEntity = GenerationResultEntity(
+        val resultEntity = GenerationResultDto(
             fullResponse = "full",
             durationMs = 123L,
-            messageSuggestionEntity = entity
+            requestMessageSuggestionDto = entity
+        )
+
+        val resultModel = GenerationResult(
+            fullResponse = "full",
+            durationMs = 123L,
+            messageSuggestion = model
         )
 
         whenever(messageSuggestionMapper.toModel(entity)).thenReturn(model)
-        // recommend is suspend, must stub from a coroutine
-        whenever(recommender.recommend(model)).thenReturn(resultEntity)
+        // recommend is suspend, must stub from a coroutine - returns domain model
+        whenever(recommender.recommend(model)).thenReturn(resultModel)
+        whenever(resultMapper.toEntity(resultModel)).thenReturn(resultEntity)
 
         val client = WebTestClient.bindToController(controller).build()
 
@@ -105,10 +115,9 @@ class AiRecommenderControllerTest {
             .jsonPath("$.message_suggestion.user_message").isEqualTo("user")
             .jsonPath("$.message_suggestion.system_message").isEqualTo("sys")
 
-        // Verify interactions (recommend is suspend -> verify inside runBlocking)
+        // Verify interactions
         verify(messageSuggestionMapper).toModel(entity)
-        runBlocking {
-            verify(recommender).recommend(model)
-        }
+        verify(recommender).recommend(model)
+        verify(resultMapper).toEntity(resultModel)
     }
 }

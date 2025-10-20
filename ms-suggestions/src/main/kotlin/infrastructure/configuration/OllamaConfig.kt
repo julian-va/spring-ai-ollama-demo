@@ -1,4 +1,4 @@
-package jva.cloud.infrastructure.config
+package infrastructure.configuration
 
 import io.netty.channel.ChannelOption
 import io.netty.handler.logging.LogLevel
@@ -38,6 +38,8 @@ class OllamaConfig(
     @param:Value("\${ollama.base-url}")
     private val baseUrl: String
 ) {
+    private val logger = LoggerFactory.getLogger(OllamaConfig::class.java)
+
     companion object {
         const val OLLAMA_CHAT_CLIENT: String = "ollama"
         private const val OLLAMA_WEBCLIENT: String = "ollama-webclient"
@@ -47,7 +49,7 @@ class OllamaConfig(
      * Create and configure the Ollama chat model bean using provided options.
      */
     @Bean(name = [OLLAMA_CHAT_CLIENT])
-    fun deepseekChatClient(
+    fun ollamaChatModel(
         api: OllamaApi,
         @Value("\${ollama.llama.model}") model: String,
         @Value("\${ollama.llama.temperature}") temperature: Double,
@@ -91,6 +93,9 @@ class OllamaConfig(
     /**
      * Create a WebClient.Builder tuned for Ollama requests: connection pool,
      * timeouts, increased in-memory buffer and a timing filter for observability.
+     *
+     * @param connectTimeoutMs connection timeout in milliseconds
+     * @param responseTimeoutSeconds response timeout in seconds
      */
     @Bean(name = [OLLAMA_WEBCLIENT])
     fun webClient(
@@ -99,16 +104,12 @@ class OllamaConfig(
     ): WebClient.Builder {
 
 
-        val logger = LoggerFactory.getLogger(OllamaConfig::class.java)
-
-        // Pool de conexiones para evitar latencias por crear sockets
         val connectionProvider = ConnectionProvider.builder("ollama-pool")
             .maxConnections(100)
-            .pendingAcquireTimeout(Duration.ofSeconds(5)) // fallar rápido si la pool está agotada
+            .pendingAcquireTimeout(Duration.ofSeconds(5))
             .pendingAcquireMaxCount(5000)
             .build()
 
-        // HttpClient con timeouts y logging de bajo nivel
         val httpClient: HttpClient = HttpClient.create(connectionProvider)
             .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMs)
             .responseTimeout(Duration.ofSeconds(responseTimeoutSeconds))
@@ -118,12 +119,10 @@ class OllamaConfig(
             }
             .wiretap("ollama-http", LogLevel.INFO, AdvancedByteBufFormat.TEXTUAL)
 
-        // Aumentar buffer si las respuestas son grandes
         val strategies = ExchangeStrategies.builder()
-            .codecs { it.defaultCodecs().maxInMemorySize(16 * 1024 * 1024) } // 16 MB
+            .codecs { it.defaultCodecs().maxInMemorySize(16 * 1024 * 1024) }
             .build()
 
-        // Filtro para medir y loggear la duración de cada request
         val timingFilter = ExchangeFilterFunction { request, next ->
             val start = System.nanoTime()
             next.exchange(request)

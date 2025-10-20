@@ -1,4 +1,4 @@
-package jva.cloud.domain.model
+package domain.model
 
 /**
  * Domain model representing the result of a text generation operation.

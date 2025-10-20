@@ -1,0 +1,39 @@
+.gradle
+.gradle/
+build/
+**/build/
+**/out/
+**/target/
+ms-suggestions/build/
+.gradle-cache/
+
+# Gradle wrapper (no hace falta incluir si ya está en contexto raíz)
+gradlew
+gradlew.bat
+
+# IDEs
+.idea
+.vscode
+*.iml
+
+# Git
+.git
+.gitignore
+
+# Docker
+.Dockerfile
+Dockerfile
+docker-compose*.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Otros
+*.class
+*.jar
+*.war
+

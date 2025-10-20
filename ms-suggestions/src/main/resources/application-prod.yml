@@ -1,0 +1,16 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  
+ollama:
+  base-url: ${SPRING_AI_OLLAMA_BASE_URL}
+  connect-timeout-ms: 60000
+  response-timeout-s: 300
+  llama:
+    model: ${SPRING_AI_OLLAMA_MODEL}
+    temperature: 0.6
+    numPredict: 1024
+    keepAlive: "10m"
+    numGPU: 22
