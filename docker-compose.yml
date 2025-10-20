@@ -36,6 +36,22 @@ services:
     networks:
       - app_net
 
+  spring-boot-service-ms-api-gateway:
+    container_name: ms-api-gateway-app
+    image: ms-api-gateway
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: ms-api-gateway/Dockerfile
+    ports:
+      - "8086:8086"
+    depends_on:
+      - spring-boot-service-ms-suggestions
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - app_net
+
 
 volumes:
   ollama-data:
