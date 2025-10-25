@@ -59,7 +59,7 @@ USER app
 # Permite inyectar opciones de JVM en tiempo de ejecución
 ENV JAVA_OPTS=""
 
-EXPOSE 8086
+EXPOSE 8080
 
 # ENTRYPOINT: usa la clase main Java de este módulo
 # Usa shell para expandir JAVA_OPTS; clases están en /app y libs en /app/lib

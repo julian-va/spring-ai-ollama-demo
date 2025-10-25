@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   ollama-service:
     image: ollama/ollama:latest
@@ -45,7 +43,24 @@ services:
       context: ./
       dockerfile: ms-api-gateway/Dockerfile
     ports:
-      - "8086:8086"
+      - "8080:8080"
+    depends_on:
+      - spring-boot-service-ms-auth
+      - ollama-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - app_net
+
+  spring-boot-service-ms-auth:
+    container_name: ms-auth-app
+    image: ms-auth
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: ms-auth/Dockerfile
+    ports:
+      - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
     networks:

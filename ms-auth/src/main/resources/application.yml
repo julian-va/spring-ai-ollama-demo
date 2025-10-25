@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: ms-auth
+
+server:
+  port: 8082
+
+  datom:
+    mongodb:
+      uri: mongodb://root:test@localhost:27017/auth
