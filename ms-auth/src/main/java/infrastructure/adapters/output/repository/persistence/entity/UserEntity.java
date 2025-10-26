@@ -19,15 +19,16 @@ import java.util.stream.Collectors;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Document
+@Document(collection = "users")
 @ToString(exclude = "password")
 public class UserEntity implements UserDetails {
     @Getter
     @Id
     private String id;
     @Indexed(unique = true)
-    private String email;
+    private String username;
     private String password;
+    @Getter
     @Builder.Default
     private List<String> roles = new ArrayList<>();
     @Getter
@@ -51,7 +52,7 @@ public class UserEntity implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.email;
+        return this.username;
     }
 
 }

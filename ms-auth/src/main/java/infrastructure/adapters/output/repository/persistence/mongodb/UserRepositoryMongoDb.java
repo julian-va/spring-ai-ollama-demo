@@ -9,6 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class UserRepositoryMongoDb implements UserRepositoryPort {
@@ -22,14 +24,15 @@ public class UserRepositoryMongoDb implements UserRepositoryPort {
         return userRepository
                 .save(UserEntity
                         .builder()
-                        .email(email)
+                        .username(email)
                         .password(passwordEncoder.encode(password))
+                        .roles(List.of("USER"))
                         .build())
                 .map(userEntityMapper::toDomain);
     }
 
     @Override
     public Mono<User> findFirstByEmail(String email) {
-        return userRepository.findFirstByEmail(email).map(userEntityMapper::toDomain);
+        return userRepository.findByUsername(email).map(userEntityMapper::toDomain);
     }
 }

@@ -24,17 +24,28 @@ import java.util.List;
 public class JwtTokenService implements TokenServicePort {
     private final JWKSource<SecurityContext> jwkSource;
 
+    private static final String NO_JWK_AVAILABLE = "No JWK available for signing";
+    private static final String ERROR_SIGNING_JWT = "Error signing JWT";
+
+    // claims
+    private static final String CLAIM_EMAIL = "username";
+    private static final String CLAIM_TOKEN_TYPE = "token_type";
+
+    // token types
+    private static final String TOKEN_TYPE_ACCESS = "access";
+    private static final String TOKEN_TYPE_REFRESH = "refresh";
+
     private final long accessTokenMs = 60 * 60 * 1000; // 1h
     private final long refreshTokenMs = 4 * 60 * 60 * 1000L; // 4h
 
     @Override
     public Mono<String> createAccessToken(User user) {
-        return Mono.fromSupplier(() -> buildToken(user.getId(), user.getEmail(), accessTokenMs));
+        return Mono.fromSupplier(() -> buildToken(user.getId(), user.getUsername(), accessTokenMs, TOKEN_TYPE_ACCESS));
     }
 
     @Override
     public Mono<String> createRefreshToken(User user) {
-        return Mono.fromSupplier(() -> buildToken(user.getId(), user.getEmail(), refreshTokenMs));
+        return Mono.fromSupplier(() -> buildToken(user.getId(), user.getUsername(), refreshTokenMs, TOKEN_TYPE_REFRESH));
     }
 
     @Override
@@ -88,7 +99,7 @@ public class JwtTokenService implements TokenServicePort {
     }
 
 
-    private String buildToken(String subject, String email, long accessTokenMs) {
+    private String buildToken(String subject, String email, long accessTokenMs, String tokenType) {
         try {
             // Seleccionar clave RSA para firma
             JWKSelector selector = new JWKSelector(new JWKMatcher.Builder()
@@ -98,7 +109,7 @@ public class JwtTokenService implements TokenServicePort {
             SecurityContext ctx = new SecurityContext() {
             };
             List<JWK> jwks = jwkSource.get(selector, ctx);
-            if (jwks.isEmpty()) throw new IllegalStateException("No JWK disponible para firma");
+            if (jwks.isEmpty()) throw new IllegalStateException(NO_JWK_AVAILABLE);
 
             RSAKey rsaKey = (RSAKey) jwks.getFirst();
             RSAPrivateKey privateKey = rsaKey.toRSAPrivateKey();
@@ -107,7 +118,8 @@ public class JwtTokenService implements TokenServicePort {
             Date now = new Date();
             JWTClaimsSet claims = new JWTClaimsSet.Builder()
                     .subject(subject)
-                    .claim("email", email)
+                    .claim(CLAIM_EMAIL, email)
+                    .claim(CLAIM_TOKEN_TYPE, tokenType)
                     .issueTime(now)
                     .expirationTime(new Date(now.getTime() + accessTokenMs))
                     .build();
@@ -123,7 +135,7 @@ public class JwtTokenService implements TokenServicePort {
             signedJWT.sign(signer);
             return signedJWT.serialize();
         } catch (Exception e) {
-            throw new RuntimeException("Error firmando JWT", e);
+            throw new RuntimeException(ERROR_SIGNING_JWT, e);
         }
     }
 }
