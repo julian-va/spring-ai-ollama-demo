@@ -1,5 +1,8 @@
 package application.usecase;
 
-public interface LoginUsaCase {
+import domain.model.AuthenticationResult;
+import reactor.core.publisher.Mono;
 
+public interface LoginUsaCase {
+    Mono<AuthenticationResult> login(String username, String password);
 }

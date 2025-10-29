@@ -1,6 +1,9 @@
 package infrastructure.adapters.input.web;
 
 import application.usecase.CreateUserUseCase;
+import application.usecase.LoginUsaCase;
+import domain.model.AuthenticationResult;
+import infrastructure.adapters.dto.AuthUsersCredentialDto;
 import infrastructure.adapters.dto.CreateUserDto;
 import infrastructure.adapters.dto.UserDto;
 import infrastructure.adapters.mappers.UserDtoMapper;
@@ -18,6 +21,7 @@ import reactor.core.publisher.Mono;
 public class AuthController {
     private final CreateUserUseCase createUserUseCase;
     private final UserDtoMapper userDtoMapper;
+    private final LoginUsaCase loginUsaCase;
 
     @PostMapping("/register")
     public Mono<ResponseEntity<UserDto>> createUser(@RequestBody CreateUserDto createUserDto) {
@@ -28,8 +32,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Mono<ResponseEntity<String>> login() {
+    public Mono<ResponseEntity<AuthenticationResult>> login(@RequestBody AuthUsersCredentialDto authUsersCredentialDto) {
         // Authentication is handled by Spring Security, so this endpoint can be empty
-        return Mono.just(ResponseEntity.ok("Login successful"));
+        return loginUsaCase.login(authUsersCredentialDto.email(), authUsersCredentialDto.password()).map(ResponseEntity::ok);
     }
 }

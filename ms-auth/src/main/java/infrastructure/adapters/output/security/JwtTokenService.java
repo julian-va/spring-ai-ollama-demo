@@ -13,6 +13,7 @@ import domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -40,12 +41,14 @@ public class JwtTokenService implements TokenServicePort {
 
     @Override
     public Mono<String> createAccessToken(User user) {
-        return Mono.fromSupplier(() -> buildToken(user.getId(), user.getUsername(), accessTokenMs, TOKEN_TYPE_ACCESS));
+        return Mono.fromSupplier(() -> buildToken(user.getId(), user.getUsername(), accessTokenMs, TOKEN_TYPE_ACCESS))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     @Override
     public Mono<String> createRefreshToken(User user) {
-        return Mono.fromSupplier(() -> buildToken(user.getId(), user.getUsername(), refreshTokenMs, TOKEN_TYPE_REFRESH));
+        return Mono.fromSupplier(() -> buildToken(user.getId(), user.getUsername(), refreshTokenMs, TOKEN_TYPE_REFRESH))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
     @Override

@@ -2,3 +2,9 @@ spring:
   config:
     activate:
       on-profile: dev
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://127.0.0.1:8082/
