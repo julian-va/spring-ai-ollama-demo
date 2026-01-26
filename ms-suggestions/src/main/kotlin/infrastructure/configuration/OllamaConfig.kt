@@ -7,7 +7,7 @@ import io.netty.handler.timeout.WriteTimeoutHandler
 import org.slf4j.LoggerFactory
 import org.springframework.ai.ollama.OllamaChatModel
 import org.springframework.ai.ollama.api.OllamaApi
-import org.springframework.ai.ollama.api.OllamaOptions
+import org.springframework.ai.ollama.api.OllamaChatOptions
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -29,7 +29,44 @@ import java.util.concurrent.TimeUnit
  * Exposes beans for the Ollama chat model, Ollama API client and a tuned
  * WebClient builder. The configuration provides sensible defaults for
  * connection pooling, timeouts and logging suitable for communicating with
- * the Ollama service.
+ * the Ollama ser{
+
+
+val connectionProvider = ConnectionProvider.builder("ollama-pool")
+.maxConnections(100)
+.pendingAcquireTimeout(Duration.ofSeconds(5))
+.pendingAcquireMaxCount(5000)
+.build()
+
+val httpClient: HttpClient = HttpClient.create(connectionProvider)
+.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMs)
+.responseTimeout(Duration.ofSeconds(responseTimeoutSeconds))
+.doOnConnected { conn ->
+conn.addHandlerLast(ReadTimeoutHandler(responseTimeoutSeconds, TimeUnit.SECONDS))
+conn.addHandlerLast(WriteTimeoutHandler(responseTimeoutSeconds, TimeUnit.SECONDS))
+}
+.wiretap("ollama-http", LogLevel.INFO, AdvancedByteBufFormat.TEXTUAL)
+
+val strategies = ExchangeStrategies.builder()
+.codecs { it.defaultCodecs().maxInMemorySize(16 * 1024 * 1024) }
+.build()
+
+val timingFilter = ExchangeFilterFunction { request, next ->
+val start = System.nanoTime()
+next.exchange(request)
+.doOnTerminate {
+val elapsedMs = (System.nanoTime() - start) / 1_000_000
+logger.info("OLLAMA {} {} -> {} ms", request.method(), request.url(), elapsedMs)
+}
+}
+
+return WebClient.builder()
+.clientConnector(ReactorClientHttpConnector(httpClient))
+.exchangeStrategies(strategies)
+.defaultHeader(HttpHeaders.USER_AGENT, "ms-suggestions/ollama")
+.baseUrl(baseUrl)
+.filter(timingFilter)
+}vice.
  *
  * @param baseUrl the base URL of the Ollama server (injected from properties).
  */
@@ -54,12 +91,11 @@ class OllamaConfig(
         @Value("\${ollama.llama.model}") model: String,
         @Value("\${ollama.llama.temperature}") temperature: Double,
         @Value("\${ollama.llama.numPredict}") numPredict: Int,
-        @Value("\${ollama.llama.keepAlive}") keepAlive: String,
-        @Value("\${ollama.llama.numGPU}") numGPU: Int
+        @Value("\${ollama.llama.keepAlive}") keepAlive: String
     ): OllamaChatModel {
         return OllamaChatModel.builder()
             .ollamaApi(api)
-            .defaultOptions(ollamaOptions(model, temperature, numPredict, keepAlive, numGPU))
+            .defaultOptions(ollamaOptions(model, temperature, numPredict, keepAlive))
             .build()
     }
 
@@ -77,16 +113,14 @@ class OllamaConfig(
         model: String,
         temperature: Double,
         numPredict: Int,
-        keepAlive: String,
-        numGPU: Int
-    ): OllamaOptions {
-        return OllamaOptions
+        keepAlive: String
+    ): OllamaChatOptions {
+        return OllamaChatOptions
             .builder()
             .model(model)
             .temperature(temperature)
             .numPredict(numPredict)
             .keepAlive(keepAlive)
-            .numGPU(numGPU)
             .build()
     }
 
@@ -117,7 +151,7 @@ class OllamaConfig(
                 conn.addHandlerLast(ReadTimeoutHandler(responseTimeoutSeconds, TimeUnit.SECONDS))
                 conn.addHandlerLast(WriteTimeoutHandler(responseTimeoutSeconds, TimeUnit.SECONDS))
             }
-            .wiretap("ollama-http", LogLevel.INFO, AdvancedByteBufFormat.TEXTUAL)
+            .wiretap("ollama-http", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL)
 
         val strategies = ExchangeStrategies.builder()
             .codecs { it.defaultCodecs().maxInMemorySize(16 * 1024 * 1024) }
@@ -128,7 +162,7 @@ class OllamaConfig(
             next.exchange(request)
                 .doOnTerminate {
                     val elapsedMs = (System.nanoTime() - start) / 1_000_000
-                    logger.info("OLLAMA {} {} -> {} ms", request.method(), request.url(), elapsedMs)
+                    logger.debug("OLLAMA {} {} -> {} ms", request.method(), request.url(), elapsedMs)
                 }
         }
 

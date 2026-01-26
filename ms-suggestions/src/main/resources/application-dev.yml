@@ -8,8 +8,7 @@ ollama:
   connect-timeout-ms: 60000
   response-timeout-s: 300
   llama:
-    model: "llama3:latest"
+    model: "qwen3:latest"
     temperature: 0.6
     numPredict: 1024
     keepAlive: "10m"
-    numGPU: 22

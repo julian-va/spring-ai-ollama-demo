@@ -1,13 +1,16 @@
 package application.service
 
+import application.port.output.AiRecommenderPort
 import application.usecase.AiRecommenderUseCase
 import domain.model.GenerationResult
 import domain.model.MessageSuggestion
-import application.port.output.AiRecommenderPort
 import infrastructure.utils.ResponseUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.messages.AbstractMessage
 import org.springframework.ai.chat.messages.SystemMessage
 import org.springframework.ai.chat.messages.UserMessage
@@ -24,10 +27,15 @@ import kotlin.time.measureTime
  * the underlying chat model.
  */
 class AiRecommenderService(private val aiRecommenderPort: AiRecommenderPort) : AiRecommenderUseCase {
+    private val logger: Logger = LoggerFactory.getLogger(AiRecommenderService::class.java)
+
     override fun recommendStream(messageSuggestion: MessageSuggestion): Flow<String> {
         val messages: List<AbstractMessage> = createMessages(messageSuggestion = messageSuggestion)
 
-        return aiRecommenderPort.sentModelStream(messages = messages).mapNotNull { chatResponse ->
+        return aiRecommenderPort.sentModelStream(messages = messages).onEach {
+            logger.info("Received streaming fragment: {}", it.result)
+        }.mapNotNull { chatResponse ->
+            logger.debug("Received streaming fragment: {}", chatResponse.result)
             chatResponse.result.output.text
         }
     }
