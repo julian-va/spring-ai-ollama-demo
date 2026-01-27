@@ -21,8 +21,8 @@ services:
     image: ms-suggestions
     restart: unless-stopped
     build:
-      context: ./ms-suggestions
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ms-suggestions/Dockerfile
     ports:
       - "8081:8081"
     depends_on:
