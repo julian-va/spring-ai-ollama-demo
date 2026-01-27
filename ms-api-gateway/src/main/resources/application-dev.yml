@@ -21,8 +21,6 @@ spring:
         - id: ms-suggestions-api-docs
           uri: http://localhost:8081
           predicates:
-            - Path=/ms-suggestions/api-docs
-            - Path=/ms-suggestions/swagger-ui.html
-            - Path=/swagger-ui.html
+            - Path=/ms-suggestions/api-docs, /ms-suggestions/swagger-ui.html, /swagger-ui.html, /swagger-ui/**
           filters:
             - RewritePath=/(ms-suggestions/)?(?<remaining>.*), /${remaining}
