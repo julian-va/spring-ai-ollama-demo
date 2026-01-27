@@ -10,8 +10,8 @@ services:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_MODELS=/root/.ollama/models
       - NVIDIA_VISIBLE_DEVICES=all
-    #entrypoint: /bin/sh
-    #command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait" ## para descargar el modelo al iniciar el contenedor
+    entrypoint: /bin/sh
+    command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait" ## para descargar el modelo al iniciar el contenedor
     networks:
       - app_net
 
@@ -27,7 +27,6 @@ services:
       - "8081:8081"
     depends_on:
       - ollama-service
-      - spring-boot-service-ms-api-gateway
     environment:
       - SPRING_AI_OLLAMA_BASE_URL=http://ollama-service:11434
       - SPRING_PROFILES_ACTIVE=prod

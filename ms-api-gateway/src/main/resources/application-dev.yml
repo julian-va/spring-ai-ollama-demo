@@ -7,14 +7,22 @@ spring:
     gateway:
       routes:
         - id: ms-suggestions-recommender-stream
-          uri: http://spring-boot-service-ms-suggestions:8081
+          uri: http://localhost:8081
           predicates:
             - Path=/ai/recommender/stream
           filters:
             - RewritePath=/ai/recommender/stream, /ai/recommender/stream
         - id: ms-suggestions-recommender-sync
-          uri: http://spring-boot-service-ms-suggestions:8081
+          uri: http://localhost:8081
           predicates:
             - Path=/ai/recommender/sync
           filters:
             - RewritePath=/ai/recommender/sync, /ai/recommender/sync
+        - id: ms-suggestions-api-docs
+          uri: http://localhost:8081
+          predicates:
+            - Path=/ms-suggestions/api-docs
+            - Path=/ms-suggestions/swagger-ui.html
+            - Path=/swagger-ui.html
+          filters:
+            - RewritePath=/(ms-suggestions/)?(?<remaining>.*), /${remaining}

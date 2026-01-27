@@ -17,3 +17,9 @@ spring:
             - Path=/ai/recommender/sync
           filters:
             - RewritePath=/ai/recommender/sync, /ai/recommender/sync
+        - id: ms-suggestions-api-docs
+          uri: http://spring-boot-service-ms-suggestions:8081
+          predicates:
+            - Path=/ms-suggestions/api-docs,/ms-suggestions/swagger-ui.html
+          filters:
+            - RewritePath=/ms-suggestions/(?<remaining>.*), /$\{remaining}
