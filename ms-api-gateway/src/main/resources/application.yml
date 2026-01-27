@@ -3,3 +3,4 @@ spring:
     name: api-gateway
 server:
   port: 8080
+

@@ -50,7 +50,7 @@ Configuración recomendada de `docker-compose.yml` (puntos clave)
     - `SPRING_AI_OLLAMA_BASE_URL=http://ollama-service:11434`  <- NO cambiar esto para la app, debe resolver dentro de
       la red.
 - Pasar el modelo con dos puntos entre comillas o via `.env`:
-    - `SPRING_AI_OLLAMA_MODEL: "llama3:8b"`
+    - `SPRING_AI_OLLAMA_MODEL: "qwen3:latest"`
 
 Ejemplo mínimo (fragmento relevante):
 
@@ -75,7 +75,7 @@ services:
     build: ./ms-suggestions
     environment:
       SPRING_AI_OLLAMA_BASE_URL: "http://ollama-service:11434"
-      SPRING_AI_OLLAMA_MODEL: "llama3:8b"
+      SPRING_AI_OLLAMA_MODEL: "qwen3:latest"
       SPRING_PROFILES_ACTIVE: "prod"
     networks:
       - app_net
@@ -190,7 +190,7 @@ docker compose exec ms-suggestions-app printenv SPRING_AI_OLLAMA_BASE_URL
 ```yaml
 environment:
   SPRING_AI_OLLAMA_BASE_URL: "http://ollama-service:11434"
-  SPRING_AI_OLLAMA_MODEL: "llama3:8b"
+  SPRING_AI_OLLAMA_MODEL: "qwen3:latest"
 ```
 
 - Asegurarse de que la configuración de Spring está usando el prefijo correcto: `spring.ai.ollama.base-url` o una
@@ -205,7 +205,7 @@ Curles útiles (ejemplos)
 curl -sS -X POST "http://localhost:11435/api/chat" \
   -H "Content-Type: application/json" \
   --data-raw '{
-    "model": "llama3:8b",
+    "model": "qwen3:latest",
     "messages": [
       {"role": "system", "content": "You are a helpful assistant."},
       {"role": "user", "content": "Resume en 2 frases qué hace Docker Compose."}
@@ -218,16 +218,16 @@ curl -sS -X POST "http://localhost:11435/api/chat" \
 ```bash
 docker run --rm --network spring-ai-ollama-demo_app_net curlimages/curl:8.1.2 -sS -X POST http://ollama-service:11434/api/chat \
   -H "Content-Type: application/json" \
-  --data-raw '{"model":"llama3:8b","messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Hola"}]}'
+  --data-raw '{"model":"qwen3:latest","messages":[{"role":"system","content":"You are a helpful assistant."},{"role":"user","content":"Hola"}]}'
 ```
 
-Cómo pasar `llama3:8b` en `docker-compose.yml`
+Cómo pasar `qwen3:latest` en `docker-compose.yml`
 
 - Use comillas si usa el formato mapa (recomendado):
 
 ```yaml
 environment:
-  SPRING_AI_OLLAMA_MODEL: "llama3:8b"
+  SPRING_AI_OLLAMA_MODEL: "qwen3:latest"
 ```
 
 - Alternativamente coloque en un `.env` y use `env_file` si prefiere separar secretos/ajustes.
@@ -239,7 +239,7 @@ Cómo descargar un modelo automáticamente en el inicio del contenedor (opcional
 
 ```yaml
 entrypoint: [ "/bin/sh", "-c" ]
-command: -c "ollama serve & sleep 5 && ollama pull llama3:8b && wait"
+command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait"
 ```
 
 (Usar con precaución: puede complicar el arranque y los healthchecks.)

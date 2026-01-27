@@ -3,8 +3,18 @@ spring:
     activate:
       on-profile: dev
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://127.0.0.1:8082/
+  cloud:
+    gateway:
+      routes:
+        - id: ms-suggestions-recommender-stream
+          uri: http://spring-boot-service-ms-suggestions:8081
+          predicates:
+            - Path=/ai/recommender/stream
+          filters:
+            - RewritePath=/ai/recommender/stream, /ai/recommender/stream
+        - id: ms-suggestions-recommender-sync
+          uri: http://spring-boot-service-ms-suggestions:8081
+          predicates:
+            - Path=/ai/recommender/sync
+          filters:
+            - RewritePath=/ai/recommender/sync, /ai/recommender/sync
