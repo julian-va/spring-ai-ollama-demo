@@ -5,22 +5,24 @@ spring:
 
   cloud:
     gateway:
-      routes:
-        - id: ms-suggestions-recommender-stream
-          uri: http://localhost:8081
-          predicates:
-            - Path=/ai/recommender/stream
-          filters:
-            - RewritePath=/ai/recommender/stream, /ai/recommender/stream
-        - id: ms-suggestions-recommender-sync
-          uri: http://localhost:8081
-          predicates:
-            - Path=/ai/recommender/sync
-          filters:
-            - RewritePath=/ai/recommender/sync, /ai/recommender/sync
-        - id: ms-suggestions-api-docs
-          uri: http://localhost:8081
-          predicates:
-            - Path=/ms-suggestions/api-docs, /ms-suggestions/swagger-ui.html, /ms-suggestions/swagger-ui/**, /swagger-ui.html, /swagger-ui/**
-          filters:
-            - RewritePath=/(ms-suggestions/)?(?<remaining>.*), /${remaining}
+      server:
+        webflux:
+          routes:
+            - id: ms-suggestions-recommender-stream
+              uri: http://localhost:8081
+              predicates:
+                - Path=/ai/recommender/stream
+              filters:
+                - RewritePath=/ai/recommender/stream, /ai/recommender/stream
+            - id: ms-suggestions-recommender-sync
+              uri: http://localhost:8081
+              predicates:
+                - Path=/ai/recommender/sync
+              filters:
+                - RewritePath=/ai/recommender/sync, /ai/recommender/sync
+            - id: suggestions-api-docs
+              uri: http://localhost:8081
+              predicates:
+                - Path=/suggestions/api-docs/**
+              filters:
+                - RewritePath=/suggestions/(?<segment>.*), /${segment}
