@@ -1,0 +1,27 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: ms-suggestions-recommender-stream
+              uri: http://spring-boot-service-ms-suggestions:8081
+              predicates:
+                - Path=/ai/recommender/stream
+              filters:
+                - RewritePath=/ai/recommender/stream, /ai/recommender/stream
+            - id: ms-suggestions-recommender-sync
+              uri: http://spring-boot-service-ms-suggestions:8081
+              predicates:
+                - Path=/ai/recommender/sync
+              filters:
+                - RewritePath=/ai/recommender/sync, /ai/recommender/sync
+            - id: ms-suggestions-api-docs
+              uri: http://spring-boot-service-ms-suggestions:8081
+              predicates:
+                - Path=/suggestions/api-docs/**
+              filters:
+                - RewritePath=/suggestions/(?<segment>.*), /${segment}

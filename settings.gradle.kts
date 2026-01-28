@@ -8,3 +8,4 @@
 rootProject.name = "spring-ai-ollama-suggestions"
 
 include("ms-suggestions")
+include("ms-api-gateway")
