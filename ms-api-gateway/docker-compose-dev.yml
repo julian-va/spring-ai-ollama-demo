@@ -16,13 +16,53 @@ services:
       - app_net
 
 
+  keycloak-db:
+    image: postgres:latest
+    container_name: keycloak_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U keycloak -d keycloak || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - app_net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    restart: unless-stopped
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=keycloak-db
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+    command: sh -c "until pg_isready -h keycloak-db -U keycloak; do echo 'waiting for postgres'; sleep 1; done; start-dev"
+    ports:
+      - "8082:8080"
+    networks:
+      - app_net
+
+
   spring-boot-service-ms-suggestions:
     container_name: ms-suggestions-app
     image: ms-suggestions
     restart: unless-stopped
     build:
-      context: ./
-      dockerfile: ms-suggestions/Dockerfile
+      context: ../ms-suggestions
+      dockerfile: Dockerfile
     ports:
       - "8081:8081"
     depends_on:
@@ -39,6 +79,7 @@ services:
 
 volumes:
   ollama-data:
+  keycloak-db-data:
 
 networks:
   app_net:
