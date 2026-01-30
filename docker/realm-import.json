@@ -1,0 +1,66 @@
+{
+  "realm": "ollama-realm",
+  "displayName": "Ollama Realm",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "ollama-user"
+      },
+      {
+        "name": "ollama-admin"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "users",
+      "path": "/users"
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "spring-gateway",
+      "name": "Spring Cloud Gateway",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "spring-gateway-secret",
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:8080/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": "e3f1c2b4-9a6d-4e12-b0a2-1c2d3e4f5a6b",
+      "username": "test_user_ollama",
+      "firstName": "Test",
+      "lastName": "Ollama",
+      "enabled": true,
+      "email": "test_user@ollama.local",
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "123456789",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ollama-user"
+      ],
+      "groups": [
+        "/users"
+      ]
+    }
+  ]
+}

@@ -3,6 +3,20 @@ spring:
     activate:
       on-profile: dev
 
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: spring-gateway
+            client-secret: spring-gateway-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile,email
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8082/realms/ollama-realm
+
   cloud:
     gateway:
       routes:
@@ -27,6 +41,6 @@ spring:
         - id: auth-keycloak
           uri: http://localhost:8082
           predicates:
-            - Path=/auth/**
+            - Path=/public/auth/**
           filters:
-            - RewritePath=/auth/(?<segment>.*), /${segment}
+            - RewritePath=/public/auth/(?<segment>.*), /${segment}
