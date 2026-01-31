@@ -10,8 +10,8 @@ services:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_MODELS=/root/.ollama/models
       - NVIDIA_VISIBLE_DEVICES=all
-    entrypoint: /bin/sh
-    command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait" ## para descargar el modelo al iniciar el contenedor
+    # entrypoint: /bin/sh
+    # command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait" ## para descargar el modelo al iniciar el contenedor
     networks:
       - app_net
 
