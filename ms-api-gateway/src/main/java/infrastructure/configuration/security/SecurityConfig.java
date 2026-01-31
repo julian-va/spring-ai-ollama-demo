@@ -1,4 +1,4 @@
-package infrastructure.configuration;
+package infrastructure.configuration.security;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -23,6 +23,15 @@ import java.util.stream.StreamSupport;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
+/**
+ * Spring Security configuration for the reactive API gateway.
+ *
+ * <p>This configuration enables WebFlux security, configures route-level
+ * authorization rules, and sets up JWT-based resource server support with a
+ * custom converter that extracts realm roles from a token claim. The class
+ * exposes beans used by Spring Security to perform authentication and
+ * authorization in a reactive environment.</p>
+ */
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
@@ -32,6 +41,20 @@ public class SecurityConfig {
     private static final String REALM_ACCESS_CLAIM = "realm_access";
     private static final String ROLES_CLAIM = "roles";
 
+    /**
+     * Configure the security filter chain for the gateway.
+     *
+     * <p>Rules applied:
+     * <ul>
+     *   <li>Requests under {@code /public/**} are permitted without authentication.</li>
+     *   <li>All other requests require the {@code ollama-user} role.</li>
+     * </ul>
+     * The method also configures OAuth2 login and resource-server JWT support
+     * that uses a custom JWT authentication converter.</p>
+     *
+     * @param http the ServerHttpSecurity to configure
+     * @return the configured SecurityWebFilterChain
+     */
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
         http
@@ -49,6 +72,15 @@ public class SecurityConfig {
     }
 
 
+    /**
+     * Provide a reactive JWT authentication converter adapter that maps JWT
+     * claims into granted authorities. The converter extracts realm roles from
+     * the {@code realm_access.roles} claim and prefixes them with {@code ROLE_}.
+     * If realm roles are not present, the default JwtGrantedAuthoritiesConverter
+     * is used.
+     *
+     * @return a ReactiveJwtAuthenticationConverterAdapter instance
+     */
     @Bean
     public ReactiveJwtAuthenticationConverterAdapter jwtReactiveAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter defaultConverter = new JwtGrantedAuthoritiesConverter();
@@ -63,6 +95,12 @@ public class SecurityConfig {
     }
 
 
+    /**
+     * Build a reactive JWT decoder using the issuer URI configured for Keycloak.
+     *
+     * @param issuerUri the issuer URI from configuration
+     * @return a ReactiveJwtDecoder that resolves keys from the issuer
+     */
     @Bean
     public ReactiveJwtDecoder reactiveJwtDecoder(@Value("${spring.security.oauth2.client.provider.keycloak.issuer-uri}") String issuerUri) {
         return ReactiveJwtDecoders.fromIssuerLocation(issuerUri);
