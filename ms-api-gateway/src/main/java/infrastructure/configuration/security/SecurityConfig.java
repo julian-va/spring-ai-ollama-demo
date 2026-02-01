@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static infrastructure.configuration.ApplicationConstants.*;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
@@ -35,11 +36,6 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
-    private static final String PUBLIC_PATH = "/public/**";
-    private static final String OLLAMA_USER_ROLE = "ollama-user";
-    private static final String ROLE_PREFIX = "ROLE_";
-    private static final String REALM_ACCESS_CLAIM = "realm_access";
-    private static final String ROLES_CLAIM = "roles";
 
     /**
      * Configure the security filter chain for the gateway.
@@ -60,7 +56,7 @@ public class SecurityConfig {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers(PUBLIC_PATH).permitAll()
+                        .pathMatchers(PUBLIC_PATH, ACTUATOR_HEALTH_PATH).permitAll()
                         .anyExchange().hasRole(OLLAMA_USER_ROLE)
                 )
                 .oauth2Login(withDefaults())

@@ -3,15 +3,14 @@ package infrastructure.configuration;
 import java.util.Set;
 
 /**
- * Centralized logging-related constants shared across filters and logging utilities.
+ * General application-wide constants.
  *
- * <p>This class groups string templates, header names and masking configuration
- * so they can be reused by multiple components without duplicating literals.
+ * <p>This class centralizes commonly used string constants, header names and
+ * configuration keys so they can be reused across the codebase.</p>
  */
-public final class LoggingConstants {
+public final class ApplicationConstants {
 
     /**
-     * prefix + "..." + suffix;
      * Headers that must have their values masked in logs.
      */
     public static final Set<String> SENSITIVE_HEADERS = Set.of(
@@ -34,7 +33,15 @@ public final class LoggingConstants {
     public static final String COLON = ":";
     public static final String UNKNOWN = "unknown";
 
-    private LoggingConstants() {
+    // Additional application constants
+    public static final String PUBLIC_PATH = "/public/**";
+    public static final String OLLAMA_USER_ROLE = "ollama-user";
+    public static final String ROLE_PREFIX = "ROLE_";
+    public static final String REALM_ACCESS_CLAIM = "realm_access";
+    public static final String ROLES_CLAIM = "roles";
+    public static final String ACTUATOR_HEALTH_PATH = "/actuator/health";
+
+    private ApplicationConstants() {
         // prevent instantiation
     }
 }

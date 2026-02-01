@@ -19,7 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static infrastructure.configuration.LoggingConstants.*;
+import static infrastructure.configuration.ApplicationConstants.*;
 
 /**
  * Global WebFlux filter that logs incoming HTTP requests and outgoing responses

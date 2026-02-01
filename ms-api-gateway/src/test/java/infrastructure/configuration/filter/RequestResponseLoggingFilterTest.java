@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static infrastructure.configuration.LoggingConstants.X_REQUEST_ID_HEADER;
+import static infrastructure.configuration.ApplicationConstants.X_REQUEST_ID_HEADER;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class RequestResponseLoggingFilterTest {
