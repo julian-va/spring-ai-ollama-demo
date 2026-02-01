@@ -48,9 +48,12 @@ WORKDIR /app
 COPY --from=build ${DEPENDENCY}/BOOT-INF/lib ./lib
 COPY --from=build ${DEPENDENCY}/META-INF ./META-INF
 COPY --from=build ${DEPENDENCY}/BOOT-INF/classes ./
+COPY --from=build /workspace/app/ms-api-gateway/wait-for-keycloak.sh /app/wait-for-keycloak.sh
 
 # Instala curl para el HEALTHCHECK (alpine)
 RUN apk add --no-cache curl
+RUN apk add --no-cache curl bash
+RUN chmod +x /app/wait-for-keycloak.sh
 
 # Crea un usuario no root y asigna permisos al directorio de la app
 RUN addgroup -S app && adduser -S app -G app && chown -R app:app /app
@@ -61,10 +64,8 @@ ENV JAVA_OPTS=""
 
 EXPOSE 8080
 
-# ENTRYPOINT: usa la clase main Java de este módulo
-# Usa shell para expandir JAVA_OPTS; clases están en /app y libs en /app/lib
-ENTRYPOINT ["sh","-c","exec java $JAVA_OPTS -cp .:lib/* infrastructure.ApiGatewayApplication"]
+ENTRYPOINT ["sh","-c","/app/wait-for-keycloak.sh http://keycloak:8080/realms/ollama-realm/.well-known/openid-configuration 180 && exec java $JAVA_OPTS -cp .:lib/* infrastructure.ApiGatewayApplication"]
 
 # HEALTHCHECK: intenta /actuator/health y como fallback /
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD curl -f http://localhost:8086/actuator/health || curl -f http://localhost:8086/ || exit 1
+  CMD curl -f http://localhost:8080/actuator/health || curl -f http://localhost:8080/ || exit 1
