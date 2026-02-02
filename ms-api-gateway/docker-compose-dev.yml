@@ -10,8 +10,51 @@ services:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_MODELS=/root/.ollama/models
       - NVIDIA_VISIBLE_DEVICES=all
-    entrypoint: /bin/sh
-    command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait" ## para descargar el modelo al iniciar el contenedor
+    # entrypoint: /bin/sh
+    # command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait" ## para descargar el modelo al iniciar el contenedor
+    networks:
+      - app_net
+
+
+  keycloak-db:
+    image: postgres:latest
+    container_name: keycloak_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "keycloak", "-d", "keycloak" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - app_net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    restart: unless-stopped
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=keycloak-db
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+    entrypoint: [ "/opt/keycloak/bin/kc.sh" ]
+    command: [ "start-dev", "--import-realm" ]
+    volumes:
+      - ../docker/realm-import.json:/opt/keycloak/data/import/realm-import.json
+    ports:
+      - "8082:8080"
     networks:
       - app_net
 
@@ -21,7 +64,7 @@ services:
     image: ms-suggestions
     restart: unless-stopped
     build:
-      context: ./
+      context: ..
       dockerfile: ms-suggestions/Dockerfile
     ports:
       - "8081:8081"
@@ -39,6 +82,7 @@ services:
 
 volumes:
   ollama-data:
+  keycloak-db-data:
 
 networks:
   app_net:

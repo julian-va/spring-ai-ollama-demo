@@ -1,0 +1,102 @@
+{
+  "realm": "ollama-realm",
+  "displayName": "Ollama Realm",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 3600,
+  "accessTokenLifespanForImplicitFlow": 3600,
+  "ssoSessionIdleTimeout": 10800,
+  "ssoSessionMaxLifespan": 2592000,
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "ollama-user"
+      },
+      {
+        "name": "ollama-admin"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "users",
+      "path": "/users"
+    },
+    {
+      "name": "admins",
+      "path": "/admins"
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "spring-gateway",
+      "name": "Spring Cloud Gateway",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "spring-gateway-secret",
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:8080/login/oauth2/code/keycloak"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ],
+      "attributes": {
+        "access.token.lifespan": "3600",
+        "id.token.lifespan": "3600",
+        "refresh.token.lifespan": "2592000"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "e3f1c2b4-9a6d-4e12-b0a2-1c2d3e4f5a6b",
+      "username": "test_user_ollama",
+      "firstName": "Test",
+      "lastName": "Ollama",
+      "enabled": true,
+      "email": "test_user@ollama.local",
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "123456789",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ollama-user"
+      ],
+      "groups": [
+        "/users"
+      ]
+    },
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "username": "admin_ollama",
+      "firstName": "Admin",
+      "lastName": "Ollama",
+      "enabled": true,
+      "email": "admin@ollama.local",
+      "emailVerified": true,
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123456",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ollama-admin"
+      ],
+      "groups": [
+        "/admins"
+      ]
+    }
+  ]
+}

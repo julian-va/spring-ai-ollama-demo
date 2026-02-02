@@ -3,26 +3,44 @@ spring:
     activate:
       on-profile: dev
 
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: spring-gateway
+            client-secret: spring-gateway-secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile,email
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8082/realms/ollama-realm
+
   cloud:
     gateway:
-      server:
-        webflux:
-          routes:
-            - id: ms-suggestions-recommender-stream
-              uri: http://localhost:8081
-              predicates:
-                - Path=/ai/recommender/stream
-              filters:
-                - RewritePath=/ai/recommender/stream, /ai/recommender/stream
-            - id: ms-suggestions-recommender-sync
-              uri: http://localhost:8081
-              predicates:
-                - Path=/ai/recommender/sync
-              filters:
-                - RewritePath=/ai/recommender/sync, /ai/recommender/sync
-            - id: suggestions-api-docs
-              uri: http://localhost:8081
-              predicates:
-                - Path=/suggestions/api-docs/**
-              filters:
-                - RewritePath=/suggestions/(?<segment>.*), /${segment}
+      routes:
+        - id: ms-suggestions-recommender-stream
+          uri: http://localhost:8081
+          predicates:
+            - Path=/ai/recommender/stream
+          filters:
+            - RewritePath=/ai/recommender/stream, /ai/recommender/stream
+        - id: ms-suggestions-recommender-sync
+          uri: http://localhost:8081
+          predicates:
+            - Path=/ai/recommender/sync
+          filters:
+            - RewritePath=/ai/recommender/sync, /ai/recommender/sync
+        - id: suggestions-api-docs
+          uri: http://localhost:8081
+          predicates:
+            - Path=/suggestions/api-docs/**
+          filters:
+            - RewritePath=/suggestions/(?<segment>.*), /${segment}
+        - id: auth-keycloak
+          uri: http://localhost:8082
+          predicates:
+            - Path=/public/auth/**
+          filters:
+            - RewritePath=/public/auth/(?<segment>.*), /${segment}

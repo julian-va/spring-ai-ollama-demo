@@ -10,8 +10,6 @@ services:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_MODELS=/root/.ollama/models
       - NVIDIA_VISIBLE_DEVICES=all
-    #entrypoint: /bin/sh
-    #command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait" ## para descargar el modelo al iniciar el contenedor
     networks:
       - app_net
 
@@ -21,7 +19,7 @@ services:
     image: ms-suggestions
     restart: unless-stopped
     build:
-      context: ./ms-suggestions
+      context: ./
       dockerfile: ms-suggestions/Dockerfile
     depends_on:
       - ollama-service
@@ -40,16 +38,68 @@ services:
     build:
       context: ./
       dockerfile: ms-api-gateway/Dockerfile
+    depends_on:
+      - keycloak
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - KEYCLOAK_CLIENT_SECRET=spring-gateway-secret
+      - SUGGESTIONS_SERVICE_URI=http://spring-boot-service-ms-suggestions:8081
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/ollama-realm
+      - KEYCLOAK_AUTH_URI=http://keycloak:8080
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS --max-time 5 http://localhost:8080/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - app_net
+
+  keycloak-db:
+    image: postgres:latest
+    container_name: keycloak_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "keycloak", "-d", "keycloak" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - app_net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    restart: unless-stopped
+    depends_on:
+      - keycloak-db
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=keycloak-db
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+    entrypoint: [ "/opt/keycloak/bin/kc.sh" ]
+    command: [ "start-dev", "--import-realm" ]
+    volumes:
+      - ./docker/realm-import.json:/opt/keycloak/data/import/realm-import.json
     networks:
       - app_net
 
 
 volumes:
   ollama-data:
+  keycloak-db-data:
 
 networks:
   app_net:
