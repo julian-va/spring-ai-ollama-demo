@@ -104,6 +104,33 @@ environment:
   SPRING_PROFILES_ACTIVE: "prod"
 ```
 
+## Architecture
+
+- Components:
+    - `ms-api-gateway` — single public entrypoint (port 8080). Handles routing, authentication and JWT validation.
+    - `ms-suggestions` — business microservice that calls Ollama for model inference (sync and streaming endpoints).
+    - `ollama-service` — local model backend (Ollama) mounted as a Docker service.
+    - `keycloak` + `keycloak-db` — identity provider and its Postgres DB (realm imported at startup).
+
+- Deployment topology: all services run on a single Docker Compose network (`app_net`). Only the gateway is exposed to
+  the host by default (`8080:8080`); other services are reachable internally via service name (e.g.
+  `http://ollama-service:11434`).
+
+- Auth flow (short): client -> gateway -> (gateway proxies token request to Keycloak at `/public/auth/.../token`) ->
+  Keycloak returns JWT -> client calls gateway with `Authorization: Bearer <token>` -> gateway validates JWT and
+  forwards the request to `ms-suggestions`.
+
+- Important files to inspect:
+    - `docker-compose.yml` (root) — deployment composition and env hints
+    - `docker/realm-import.json` — Keycloak realm, clients and users
+    - `ms-api-gateway/src/main/resources/application-prod.yml` — gateway routes and Keycloak proxy
+    - `ms-api-gateway/src/main/java/infrastructure/configuration/security/SecurityConfig.java` — JWT validation and role
+      mapping
+    - `ms-suggestions/src/main/resources/application-prod.yml` — Ollama config bindings
+
+> For a detailed architecture description (components, flows, endpoint map, security matrix) see `ARCHITECTURE.md` in
+> the repository root.
+
 ## Security (Keycloak) and tokens
 
 This repository supplies a Keycloak realm import (`docker/realm-import.json`) with a realm named `ollama-realm`. The
