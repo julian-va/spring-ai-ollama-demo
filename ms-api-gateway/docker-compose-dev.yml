@@ -10,52 +10,11 @@ services:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_MODELS=/root/.ollama/models
       - NVIDIA_VISIBLE_DEVICES=all
+    # entrypoint: /bin/sh
+    # command: -c "ollama serve & sleep 5 && ollama pull qwen3:latest && wait" ## para descargar el modelo al iniciar el contenedor
     networks:
       - app_net
 
-
-  spring-boot-service-ms-suggestions:
-    container_name: ms-suggestions-app
-    image: ms-suggestions
-    restart: unless-stopped
-    build:
-      context: ./
-      dockerfile: ms-suggestions/Dockerfile
-    depends_on:
-      - ollama-service
-      - spring-boot-service-ms-api-gateway
-    environment:
-      - SPRING_AI_OLLAMA_BASE_URL=http://ollama-service:11434
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_AI_OLLAMA_MODEL=qwen3:latest
-    networks:
-      - app_net
-
-  spring-boot-service-ms-api-gateway:
-    container_name: ms-api-gateway-app
-    image: ms-api-gateway
-    restart: unless-stopped
-    build:
-      context: ./
-      dockerfile: ms-api-gateway/Dockerfile
-    depends_on:
-      - keycloak
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - KEYCLOAK_CLIENT_SECRET=spring-gateway-secret
-      - SUGGESTIONS_SERVICE_URI=http://spring-boot-service-ms-suggestions:8081
-      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/ollama-realm
-      - KEYCLOAK_AUTH_URI=http://keycloak:8080
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -fsS --max-time 5 http://localhost:8080/actuator/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    networks:
-      - app_net
 
   keycloak-db:
     image: postgres:latest
@@ -81,7 +40,8 @@ services:
     container_name: keycloak
     restart: unless-stopped
     depends_on:
-      - keycloak-db
+      keycloak-db:
+        condition: service_healthy
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
@@ -92,9 +52,32 @@ services:
     entrypoint: [ "/opt/keycloak/bin/kc.sh" ]
     command: [ "start-dev", "--import-realm" ]
     volumes:
-      - ./docker/realm-import.json:/opt/keycloak/data/import/realm-import.json
+      - ../docker/realm-import.json:/opt/keycloak/data/import/realm-import.json
+    ports:
+      - "8082:8080"
     networks:
       - app_net
+
+
+  spring-boot-service-ms-suggestions:
+    container_name: ms-suggestions-app
+    image: ms-suggestions
+    restart: unless-stopped
+    build:
+      context: ..
+      dockerfile: ms-suggestions/Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - ollama-service
+    environment:
+      - SPRING_AI_OLLAMA_BASE_URL=http://ollama-service:11434
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_AI_OLLAMA_MODEL=qwen3:latest
+    networks:
+      - app_net
+
+
 
 
 volumes:

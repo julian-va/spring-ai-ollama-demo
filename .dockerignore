@@ -1,0 +1,47 @@
+# Consolidated .dockerignore for the repository root
+# This file is used when docker-compose or docker build use the repo root as build context.
+
+# Gradle / build artifacts
+build/
+**/build/
+.gradle/
+.gradle-cache/
+.gradle-user-home/
+
+# Gradle wrapper caches and tmp
+.gradle/**
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Git
+.git/
+.gitignore
+
+# Docker and compose local overrides
+Dockerfile*
+docker-compose*.yml
+
+# Java artifacts
+*.jar
+*.war
+*.class
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Node and temp
+node_modules/
+tmp/
+
+# Other
+*/tmp/
+
+# If you need module-specific rules when building from a module folder,
+# keep a .dockerignore inside that module with only module-specific entries.
+# Otherwise remove module .dockerignore to avoid confusion.
+

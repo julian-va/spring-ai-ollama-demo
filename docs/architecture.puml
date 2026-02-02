@@ -1,0 +1,49 @@
+@startuml
+"skinparam" handwritten true
+' Deployment / component view and sequence combined
+
+package "Docker Compose Network (app_net)" {
+  node "API Gateway\n(ms-api-gateway)" as Gateway #LightBlue
+  node "Suggestions Service\n(ms-suggestions)" as Suggestions #LightGreen
+  node "Ollama Service\n(ollama-service)" as Ollama #LightYellow
+  node "Keycloak\n(keycloak)" as Keycloak #LightCoral
+  database "Keycloak DB\n(keycloak-db)" as KCDB #Bisque
+}
+
+package "External" {
+  actor Client
+}
+
+' Sequence flow
+Client -> Gateway: Request token (proxied)\nPOST /public/auth/realms/ollama-realm/protocol/openid-connect/token
+Gateway -> Keycloak: Forward token request
+Keycloak -> KCDB: Validate user / read realm
+KCDB --> Keycloak: User and realm data
+Keycloak --> Gateway: Return access_token (JWT)
+Gateway --> Client: Forward token response
+
+Client -> Gateway: Call protected API\nAuthorization: Bearer <token>
+Gateway -> Gateway: Validate JWT (issuer, signature, realm_access.roles)
+alt role=ollama-user
+  Gateway -> Suggestions: Forward request (/ai/recommender/sync or /stream)
+  Suggestions -> Ollama: Call model API (SPRING_AI_OLLAMA_BASE_URL)
+  Ollama --> Suggestions: Model response / stream
+  Suggestions --> Gateway: Response
+  Gateway --> Client: Response
+else role!=ollama-user
+  Gateway --> Client: 403 Forbidden
+end
+
+' Legend
+note left of Gateway
+  - Route configuration (application-prod.yml)
+  - JWT validation (ReactiveJwtDecoder)
+  - Role mapping: realm_access.roles -> ROLE_<role>
+end note
+
+note right of Suggestions
+  - Calls Ollama using env: SPRING_AI_OLLAMA_BASE_URL
+  - Supports sync and streaming endpoints
+end note
+
+@enduml

@@ -27,7 +27,6 @@ ollama.llama.model=ollama/local-model
 ollama.llama.temperature=0.7
 ollama.llama.numPredict=128
 ollama.llama.keepAlive=none
-ollama.llama.numGPU=0
 ollama.connect-timeout-ms=10000
 ollama.response-timeout-s=60
 

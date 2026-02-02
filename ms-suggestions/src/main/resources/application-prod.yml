@@ -3,7 +3,7 @@ spring:
     activate:
       on-profile: prod
 
-  
+
 ollama:
   base-url: ${SPRING_AI_OLLAMA_BASE_URL}
   connect-timeout-ms: 60000
@@ -13,4 +13,3 @@ ollama:
     temperature: 0.6
     numPredict: 1024
     keepAlive: "10m"
-    numGPU: 22
